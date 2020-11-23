@@ -51,10 +51,25 @@ async def ping(ctx):
 async def enter(ctx, arg):
 	realname = arg
 	userID = ctx.author.id
-	discname = ctx.author.name + '#' + ctx.author.discriminator
+	discname = str(ctx.author)
 
 	names.append((realname,userID,discname))
 	await ctx.send(f"Added {realname} with Discord name {discname} to my Secret Santa list!")
+
+@bot.command()
+async def addperson(ctx, name, ID: int):
+	if 	ctx.channel.id != 413979914900078592:
+		await ctx.send("This command can only be used in the Council channel.")
+		return
+	try:
+		target = await bot.fetch_user(ID)
+	except:
+		await ctx.send(f"Could not find a user with ID {ID}.")
+		return
+	names.append((name,ID,str(target)))
+	await ctx.send(f"Added {name}, {str(target)} on Discord, to my Secret Santa list.")
+	await target.send(f"Hi there! {str(ctx.author)} added you to my Secret Santa list! If this is a mistake, please contact a club council member. Since James is currently testing this function, you should probably do that anyway.")
+
 
 @bot.command()
 async def list(ctx):
