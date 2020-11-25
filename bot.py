@@ -68,7 +68,7 @@ async def addperson(ctx, name, ID: int):
 		return
 	names.append((name,ID,str(target)))
 	await ctx.send(f"Added {name}, {str(target)} on Discord, to my Secret Santa list.")
-	await target.send(f"Hi there! {str(ctx.author)} added you to my Secret Santa list! If this is a mistake, please contact a club council member. Since James is currently testing this function, you should probably do that anyway.")
+	await target.send(f"Hi there! {str(ctx.author)} added you to my Secret Santa list under the name {name}! When I get to allocating names, you will be sent a message in this channel. If this is a mistake, please contact a club council member.")
 
 
 @bot.command()
@@ -150,7 +150,7 @@ async def on_message(message):
 	if message.author == bot.user:
 		return
 
-	if message.content.startswith('OwO') or message.content.startswith('uwu') or message.content.startswith('owo'):
+	if message.content.lower().startswith(('owo','uwu','hewwo')):
 		await message.channel.send('Ew, furry')
 
 	await bot.process_commands(message)
