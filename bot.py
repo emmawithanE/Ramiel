@@ -4,6 +4,9 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 import random
 
 load_dotenv()
@@ -17,18 +20,27 @@ bot = commands.Bot(
 	intents = intents
 	)
 
-
-# creation and loading of storage file
-# namefile = open("names.txt", "r+")
-# names = namefile.readlines()
-# namefile.close()
-
 # Generate names.txt if it doesn't exist already
 try:
 	open("names.txt", "x")
 	print('Created names.txt - was it deleted or moved?')
 except:
 	pass
+
+
+
+# get the Google Sheet used for tracking things people like
+# use creds to create a client to interact with the Google Drive API
+scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+client = gspread.authorize(creds)
+
+# Find a workbook by name and open the first sheet
+sheet = client.open("Secret Santa Responses")
+page = sheet.get_worksheet(0)
+
+
+
 
 # Load current names.txt into local list
 names = []
@@ -40,6 +52,7 @@ with open("names.txt", "r") as file:
 @bot.event
 async def on_ready():
 	print(f"Logged in as {bot.user}")
+	await bot.change_presence(status=discord.Status.invisible)
 
 # testing responding to keywords
 
@@ -58,7 +71,7 @@ async def enter(ctx, arg):
 
 @bot.command()
 async def addperson(ctx, name, ID: int):
-	if 	ctx.channel.id != 413979914900078592:
+	if 	(ctx.channel.id != 413979914900078592 and ctx.channel.id != 686928934411173912):
 		await ctx.send("This command can only be used in the Council channel.")
 		return
 	try:
@@ -103,6 +116,35 @@ async def feedback(ctx):
 		await user.send(f"Hello {name}!")
 
 @bot.command()
+async def showlikes(ctx, arg):
+	try:
+		row = page.find(arg).row
+	except:
+		print(f"Could not find cell containing {arg}.\n\n")
+		return
+	likes = page.row_values(row)
+	labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+
+	msg = ''
+	paragraph = ''
+
+	for i in range(1,11):
+		paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+		if (len(msg) + len(paragraph) < 1990):
+			# paragraph can fit in message still
+			msg += paragraph
+			print(f"Combining line {i} into msg")
+		else:
+			#paragraph is too large to add, send message and start a new one
+			await ctx.send(msg)
+			msg = paragraph
+			print(f"Printing message at line {i-1}")
+
+	await ctx.send(msg)
+
+
+
+@bot.command()
 async def fire(ctx):
 	if ctx.author.id != 268721746708791297:
 		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(268721746708791297).name}.")
@@ -141,9 +183,50 @@ async def fire(ctx):
 
 			# send a message through givID to givname, naming recname and recdisc
 			giver = await bot.fetch_user(givID)
-			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Jame!")
+			await giver.send(f"Hi {givname}! If I messaged you just now, please disregard that, Jame fucked up. I have randomly allocated Secret Santa names *again*, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Jame!")
 
 
+
+			try:
+				row = page.find(recdisc).row
+
+				likes = page.row_values(row)
+				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+
+				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
+				msg = ''
+				paragraph = ''
+
+				for i in range(1,11):
+					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+					if (len(msg) + len(paragraph) < 1990):
+						# paragraph can fit in message still
+						msg += paragraph
+						print(f"Combining line {i} into msg")
+					else:
+						#paragraph is too large to add, send message and start a new one
+						await giver.send(msg)
+						msg = paragraph
+						print(f"Printing message at line {i-1}")
+
+				await giver.send(msg)
+
+			except:
+				print(f"Could not find cell containing {recdisc}.\n\n")
+				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Jame!")
+
+		try:
+			open("DONT_FUCKING_OPEN_THIS.txt", "x")
+			print('Created DONT_FUCKING_OPEN_THIS.txt')
+		except:
+			pass
+
+		DONT = open("DONT_FUCKING_OPEN_THIS.txt","w+")
+		DONT.write("Recipients, in order of names.txt:\n\n")
+		for name, ID, username in recipients:
+			DONT.write(name + "\n")
+		DONT.close()
+		await ctx.send("Created DONT_FUCKING_OPEN_THIS.txt!")
 
 @bot.event
 async def on_message(message):
