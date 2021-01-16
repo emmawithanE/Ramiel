@@ -10,7 +10,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import random
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.getenv('DISCORD_TOKEN_RAM')
 
 intents = discord.Intents.default()
 
