@@ -13,6 +13,8 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
 
 intents = discord.Intents.default()
+intents.members = True
+intents.reactions = True
 
 bot = commands.Bot(
 	command_prefix=("R: ","R:","Ramiel, "),
@@ -20,213 +22,181 @@ bot = commands.Bot(
 	intents = intents
 	)
 
-# Generate names.txt if it doesn't exist already
-try:
-	open("names.txt", "x")
-	print('Created names.txt - was it deleted or moved?')
-except:
-	pass
+
+#reactdict = {
+#	"💜": "Heart",
+#	"🔑": "PuzzleSolver"
+#}
+
+class reactset:
+	def __init__(self,link,roles,perms=None):
+		linklist = link.split("/")
+		self.svr = int(linklist[0])
+		self.chnl = int(linklist[1])
+		self.msg = int(linklist[2])
+
+		self.reactdict = roles #give as dict
+		self.permdict = perms
+
+messagestocheck = []
+
+#append new messages to check
+messagestocheck.append(reactset(link="686753804137267207/686753804137267288/811388529438883870",roles={"💜": "Heart","🔑": "PuzzleSolver"}))
+
+#WIP - Roles based on reactions?
+#TODO - Import class contents from file???
+
+async def roleadd(self,reactemoji,user,msg,reactobj):
+	#attempts to get a role from reactemoji and reactobj, then add it to the user if the user is allowed to have it
+
+	#role:
+	try:
+		role = discord.utils.get(msg.guild.roles, name = message.reactdict[str(reactemoji)])
+	except Exception as e:
+		print(f"Failed to get role for emoji {str(reaction.emoji)} - error {e}")
+		print(f"Reaction by {str(user)} on message in {msg.guild.name}, channel {msg.channel.name}, ID: {msg.id}")
+		return
 
 
+async def rolecheck():
+	#https://discord.com/channels/686753804137267207/686753804137267288/811388529438883870 test message in my server
 
-# get the Google Sheet used for tracking things people like
-# use creds to create a client to interact with the Google Drive API
-scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-client = gspread.authorize(creds)
+	for message in messagestocheck:
 
-# Find a workbook by name and open the first sheet
-sheet = client.open("Secret Santa Responses")
-page = sheet.get_worksheet(0)
+		print(f"Working message at svr: {message.svr}, chnl: {message.chnl}, msg: {message.msg}\n\n")
+	
+		msg = await bot.get_guild(message.svr).get_channel(message.chnl).fetch_message(message.msg)
+	
+		for reaction in msg.reactions:
+			try:
+				role = discord.utils.get(msg.guild.roles, name = message.reactdict[str(reaction.emoji)])
+			except Exception as e:
+				print(f"Failed to get role for emoji {str(reaction.emoji)} - error {e}")
+				continue
+	
+			reactmembers = await reaction.users().flatten() #List of people who have made that reaction
+			rolemembers = role.members #List of people who have the associated role
+	
+			addrole = set(reactmembers) - set(rolemembers) #people who reacted but don't have the role, and thus need it
+			remrole = set(rolemembers) - set(reactmembers) #people who have the role but did not react, and thus need it removed
+	
+			#print(reactmembers)
+			#print(rolemembers)
+			#print(addrole)
+			#print(remrole)
+	
+			for user in addrole:
+				if user.id == 268721746708791297:
+					continue
+	
+				try:
+					member = await msg.guild.fetch_member(user.id) #This is the dumbest fucking thing
+					await member.add_roles(role)
+					print(f"Added role {str(role)} to {str(user)}")
+				except Exception as e:
+					print(f"Failed to add role {str(role)} to {str(user)} - {e}")
+	
+			for user in remrole:
+				try:
+					member = await msg.guild.fetch_member(user.id)
+					await member.remove_roles(role)
+					print(f"Removed role {str(role)} from {str(user)}")
+				except Exception as e:
+					print(f"Failed to remove role {str(role)} from {str(user)} - {e}")
 
 
-
-
-# Load current names.txt into local list
-names = []
-with open("names.txt", "r") as file:
-	for i in file:
-		line = i.split("|")
-		names.append((line[0], int(line[1]), line[2][:-1]))
 
 @bot.event
 async def on_ready():
 	print(f"Logged in as {bot.user}")
-	await bot.change_presence(status=discord.Status.invisible)
+	# await bot.change_presence(status=discord.Status.invisible)
 
-# testing responding to keywords
-
+# basic feedback
 @bot.command()
 async def ping(ctx):
 	await ctx.send('pong!')
 
 @bot.command()
-async def enter(ctx, arg):
-	realname = arg
-	userID = ctx.author.id
-	discname = str(ctx.author)
-
-	names.append((realname,userID,discname))
-	await ctx.send(f"Added {realname} with Discord name {discname} to my Secret Santa list!")
+async def role(ctx):
+	await rolecheck()
+	await ctx.send("Roles updated, hopefully")
 
 @bot.command()
-async def addperson(ctx, name, ID: int):
-	if 	(ctx.channel.id != 413979914900078592 and ctx.channel.id != 686928934411173912):
-		await ctx.send("This command can only be used in the Council channel.")
-		return
-	try:
-		target = await bot.fetch_user(ID)
-	except:
-		await ctx.send(f"Could not find a user with ID {ID}.")
-		return
-	names.append((name,ID,str(target)))
-	await ctx.send(f"Added {name}, {str(target)} on Discord, to my Secret Santa list.")
-	await target.send(f"Hi there! {str(ctx.author)} added you to my Secret Santa list under the name {name}! When I get to allocating names, you will be sent a message in this channel. If this is a mistake, please contact a club council member.")
+async def annoyEmma(ctx):
+	channel = await bot.fetch_channel(686928934411173912)
+	await channel.send("owo what's this")
+
+
+
+@bot.command()
+async def annoyEmmaByUser(ctx):
+	target = bot.fetch_user(268721746708791297)
+	await target.send("uwu what's this")
+
 
 
 @bot.command()
 async def list(ctx):
-	for row in names:
-		await ctx.send(row)
+	Emma = await bot.fetch_user(268721746708791297)
+	message = "```Ramiel v1.0.3 commands:\n"
+	message += " - list: lists bot commands.\n"
+	message += " - ping: prompt a basic response.\n"
+	message += f" - annoyEmma: sends a message to Emma ({str(Emma)}).\n"
+	message += " - annoyEmmaByUser: sends a different message to Emma, using a different targeting method.\n"
+	message += " - role: tells the bot to update member roles based on reactions. Currently only applies to a test server.\n"
+	message += " - repeat: repeats what you say back to you. WARNING: In Progress."
+	message += "```"
+
+	await ctx.send(message)
+
+
 
 @bot.command()
-async def save(ctx):
-	namefile = open("names.txt","w+")
-	for name, ID, username in names:
-		namefile.write(name + "|" + str(ID) + "|" + username + "\n")
-	namefile.close()
-	await ctx.send("Saved!")
+async def repeatthislineproperlyplease(ctx, *args):
+	text = ' '.join(args) # the text of the message as a string
+	await ctx.send(text)
 
 @bot.command()
-async def annoyJame(ctx):
-	channel = await bot.fetch_channel(686928934411173912)
-	await channel.send("owo what's this")
+async def repeat(ctx, *args):
+	text = ' '.join(args) # the text of the message as a string
 
-@bot.command()
-async def annoyJameByUser(ctx):
-	target = bot.fetch_user(268721746708791297)
-	await target.send("uwu what's this")
+	# reverse
+	flipped = text[::-1]
 
-@bot.command()
-async def feedback(ctx):
-	for name, ID, username in names:
-		print(ID)
-		user = await bot.fetch_user(ID)
-		print(f"{name}  {user}  {username}") 
-		await user.send(f"Hello {name}!")
+	key = "onethreeseven"
+	letters = 0 #for tracking and skipping not-letters correctly
 
-@bot.command()
-async def showlikes(ctx, arg):
-	try:
-		row = page.find(arg).row
-	except:
-		print(f"Could not find cell containing {arg}.\n\n")
-		return
-	likes = page.row_values(row)
-	labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+	output = ""
 
-	msg = ''
-	paragraph = ''
+	# vigenere cipher - only process on letters
+	for char in flipped:
+		if char.isalpha():
+			offset = 0
+			if char.islower():
+				offset = 97 #'a'
+			else:
+				offset = 65 #'A'
 
-	for i in range(1,11):
-		paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
-		if (len(msg) + len(paragraph) < 1990):
-			# paragraph can fit in message still
-			msg += paragraph
-			print(f"Combining line {i} into msg")
+			num = ord(char) - offset
+			encoded = ( ( num + ( ord( key[letters % len(key)]) -97)) % 26) + offset
+
+			output += chr(encoded)
+
+			letters += 1
+
+		elif char.isnumeric():
+			encoded = 105 - ord(char)
+
+			output += chr(encoded)
+
 		else:
-			#paragraph is too large to add, send message and start a new one
-			await ctx.send(msg)
-			msg = paragraph
-			print(f"Printing message at line {i-1}")
-
-	await ctx.send(msg)
+			output+= char
 
 
 
-@bot.command()
-async def fire(ctx):
-	if ctx.author.id != 268721746708791297:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(268721746708791297).name}.")
-	else:
-		recipients = names.copy()
+	await ctx.send(output)
 
-		# randomly shuffle recipients list
-		random.shuffle(recipients)
-		print("Shuffling first time!")
-
-		matched = True
-
-		# shuffle again as long as any names are in the same place between the two
-		while matched == True:
-
-			matched = False
-
-			for a, b in zip(names,recipients):
-
-				# compare user IDs as they are most guaranteed separate and unchanging
-				if a[1] == b[1]:
-					#need to reshuffle and try again
-					random.shuffle(recipients)
-					print("Match! Shuffled again.")
-					matched = True
-					break
-
-		print("Shuffle complete, hopefully! Sending names...")
-
-		for a, b in zip(names,recipients):
-			recname = b[0]
-			recdisc = b[2]
-
-			givname = a[0]
-			givID = a[1]
-
-			# send a message through givID to givname, naming recname and recdisc
-			giver = await bot.fetch_user(givID)
-			await giver.send(f"Hi {givname}! If I messaged you just now, please disregard that, Jame fucked up. I have randomly allocated Secret Santa names *again*, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Jame!")
-
-
-
-			try:
-				row = page.find(recdisc).row
-
-				likes = page.row_values(row)
-				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
-
-				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
-				msg = ''
-				paragraph = ''
-
-				for i in range(1,11):
-					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
-					if (len(msg) + len(paragraph) < 1990):
-						# paragraph can fit in message still
-						msg += paragraph
-						print(f"Combining line {i} into msg")
-					else:
-						#paragraph is too large to add, send message and start a new one
-						await giver.send(msg)
-						msg = paragraph
-						print(f"Printing message at line {i-1}")
-
-				await giver.send(msg)
-
-			except:
-				print(f"Could not find cell containing {recdisc}.\n\n")
-				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Jame!")
-
-		try:
-			open("DONT_FUCKING_OPEN_THIS.txt", "x")
-			print('Created DONT_FUCKING_OPEN_THIS.txt')
-		except:
-			pass
-
-		DONT = open("DONT_FUCKING_OPEN_THIS.txt","w+")
-		DONT.write("Recipients, in order of names.txt:\n\n")
-		for name, ID, username in recipients:
-			DONT.write(name + "\n")
-		DONT.close()
-		await ctx.send("Created DONT_FUCKING_OPEN_THIS.txt!")
+#----------------------------------------------------------------
 
 @bot.event
 async def on_message(message):
@@ -238,5 +208,22 @@ async def on_message(message):
 
 	await bot.process_commands(message)
 
+@bot.event
+async def on_reaction_add(reaction, member):
+	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id}")
+
+@bot.event
+async def on_raw_reaction_add(payload):
+	for message in messagestocheck if message.msg == payload.message_id:
+
+
+
+@bot.event
+async def on_reaction_remove(reaction, member):
+	print(f"Reaction removed in {reaction.message.channel.name} on message ID {reaction.message.id}")
+
+
+
 
 bot.run(TOKEN)
+
