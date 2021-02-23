@@ -4,11 +4,6 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
-import random
-
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
 
@@ -42,20 +37,59 @@ messagestocheck = []
 
 #append new messages to check
 messagestocheck.append(reactset(link="686753804137267207/686753804137267288/811388529438883870",roles={"💜": "Heart","🔑": "PuzzleSolver"}))
-
+messagestocheck.append(reactset(link="413975787427987457/689268656135471116/813726033689313330",roles={"🏳️‍🌈": "biggayrole","🚂": "transrole","🚴": "birole"},perms={"transrole": "transpermission","birole": "transpermission"}))
 #WIP - Roles based on reactions?
 #TODO - Import class contents from file???
 
-async def roleadd(self,reactemoji,user,msg,reactobj):
+async def changememberrole(role,user,remove=False):
+	if user.id == 268721746708791297:
+		return
+
+	if remove:
+		try:
+			member = await role.guild.fetch_member(user.id) #This is the dumbest fucking thing
+			await member.remove_roles(role,reason="Removed reaction")
+			print(f"Removed role {role.name} from {str(user)}")
+		except Exception as e:
+			print(f"Failed to remove role {role.name} from {str(user)} - {e}")
+	else:
+		try:
+			member = await role.guild.fetch_member(user.id) #This is the dumbest fucking thing
+			await member.add_roles(role,reason="Added reaction")
+			print(f"Added role {role.name} to {str(user)}")
+		except Exception as e:
+			print(f"Failed to add role {role.name} to {str(user)} - {e}")
+	pass
+
+
+
+async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 	#attempts to get a role from reactemoji and reactobj, then add it to the user if the user is allowed to have it
 
+	print("roleaddremove beginning here :)")
 	#role:
 	try:
-		role = discord.utils.get(msg.guild.roles, name = message.reactdict[str(reactemoji)])
+		role = discord.utils.get(msg.guild.roles, name = reactobj.reactdict[str(reactemoji)])
 	except Exception as e:
-		print(f"Failed to get role for emoji {str(reaction.emoji)} - error {e}")
-		print(f"Reaction by {str(user)} on message in {msg.guild.name}, channel {msg.channel.name}, ID: {msg.id}")
+		print(f"Failed to get role for emoji {reaction.emoji.name} - error {e}")
+		print(f"Reaction changed by {str(user)} on message in {msg.guild.name}, channel {msg.channel.name}, ID: {msg.id}")
 		return
+
+	print(f"successfully found a role {role.name}")
+
+	# If role has a permission role and the person has it, give role, else print note and return
+	if reactobj.permdict != None:
+		prereq = reactobj.permdict.get(role.name)
+		if prereq != None:
+			roleneeded = discord.utils.get(msg.guild.roles, name = prereq)
+			if user not in roleneeded.members:
+				print(f"{str(user)} tried to add or remove role {role.name} but could not as they do not have role {prereq}")
+				return
+
+	print("User appears to have permission, passing to changememberrole")
+	await changememberrole(role=role,user=user,remove=remove)
+
+
 
 
 async def rolecheck():
@@ -71,7 +105,7 @@ async def rolecheck():
 			try:
 				role = discord.utils.get(msg.guild.roles, name = message.reactdict[str(reaction.emoji)])
 			except Exception as e:
-				print(f"Failed to get role for emoji {str(reaction.emoji)} - error {e}")
+				print(f"Failed to get role for emoji {reaction.emoji.name} - error {e}")
 				continue
 	
 			reactmembers = await reaction.users().flatten() #List of people who have made that reaction
@@ -79,6 +113,16 @@ async def rolecheck():
 	
 			addrole = set(reactmembers) - set(rolemembers) #people who reacted but don't have the role, and thus need it
 			remrole = set(rolemembers) - set(reactmembers) #people who have the role but did not react, and thus need it removed
+
+			#Only add role to people who have permission for it
+			if message.permdict != None:
+				prereq = message.permdict.get(role.name)
+				if prereq != None:
+					roleneeded = discord.utils.get(msg.guild.roles, name = prereq)
+					permitted = roleneeded.members
+					addrole = addrole & set(permitted)
+
+
 	
 			#print(reactmembers)
 			#print(rolemembers)
@@ -88,7 +132,7 @@ async def rolecheck():
 			for user in addrole:
 				if user.id == 268721746708791297:
 					continue
-	
+
 				try:
 					member = await msg.guild.fetch_member(user.id) #This is the dumbest fucking thing
 					await member.add_roles(role)
@@ -109,6 +153,8 @@ async def rolecheck():
 @bot.event
 async def on_ready():
 	print(f"Logged in as {bot.user}")
+	await rolecheck()
+	print("Initial rolecheck complete")
 	# await bot.change_presence(status=discord.Status.invisible)
 
 # basic feedback
@@ -130,7 +176,7 @@ async def annoyEmma(ctx):
 
 @bot.command()
 async def annoyEmmaByUser(ctx):
-	target = bot.fetch_user(268721746708791297)
+	target = await bot.fetch_user(268721746708791297)
 	await target.send("uwu what's this")
 
 
@@ -208,15 +254,32 @@ async def on_message(message):
 
 	await bot.process_commands(message)
 
-@bot.event
-async def on_reaction_add(reaction, member):
-	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id}")
+
+
+
+async def payloadhandle(payload,remove=False):
+	print(f"Parsing payload-----")
+	for message in [a for a in messagestocheck if a.msg == payload.message_id]:
+		print("Reaction message ID matches a reactset, passing to roleaddremove\n")
+		target = await bot.fetch_user(payload.user_id)
+		msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
+		await roleaddremove(reactemoji=payload.emoji,user=target,msg=msg,reactobj=message,remove=remove)
 
 @bot.event
 async def on_raw_reaction_add(payload):
-	for message in messagestocheck if message.msg == payload.message_id:
+	print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), add")
+	await payloadhandle(payload=payload,remove=False)
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+	print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), remove")
+	await payloadhandle(payload=payload,remove=True)
 
 
+
+@bot.event
+async def on_reaction_add(reaction, member):
+	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id}")
 
 @bot.event
 async def on_reaction_remove(reaction, member):
@@ -226,4 +289,3 @@ async def on_reaction_remove(reaction, member):
 
 
 bot.run(TOKEN)
-
