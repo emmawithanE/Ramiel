@@ -36,8 +36,40 @@ class reactset:
 messagestocheck = []
 
 #append new messages to check
-messagestocheck.append(reactset(link="686753804137267207/686753804137267288/811388529438883870",roles={"💜": "Heart","🔑": "PuzzleSolver"}))
-messagestocheck.append(reactset(link="413975787427987457/689268656135471116/813726033689313330",roles={"🏳️‍🌈": "biggayrole","🚂": "transrole","🚴": "birole"},perms={"transrole": "transpermission","birole": "transpermission"}))
+#perms are a dict of role to be limited : role required to have it
+messagestocheck.append(reactset(
+	link="686753804137267207/686753804137267288/811388529438883870",
+	roles={
+		"💜": "Heart",
+		"🔑": "PuzzleSolver"} ))
+
+#Test to make sure perms was working, kept around to demonstrate for future reference how to target custom emoji
+messagestocheck.append(reactset(
+	link="413975787427987457/689268656135471116/813726033689313330",
+	roles={
+		"🏳️‍🌈": "biggayrole",
+		"<:trans:702513977472581633>": "transrole",
+		"🚴": "birole"},
+	perms={
+		"transrole": "transpermission",
+		"birole": "transpermission"} ))
+
+#https://discord.com/channels/413975787427987457/676348033285357568/817998671827173376
+# Actual message in #welcome of the club
+messagestocheck.append(reactset(
+	link="413975787427987457/676348033285357568/817998671827173376",
+	roles={
+		"⭐": "Dog Star",
+		"🍆": "OH&S hazard",
+		"🏖️": "heypeople",
+		"📝": "Master of Games"},
+	perms={
+		"Dog Star": "People who definitely exist",
+		"OH&S hazard": "People who definitely exist",
+		"heypeople": "People who definitely exist",
+		"Master of Games": "People who definitely exist"} ))
+
+
 #WIP - Roles based on reactions?
 #TODO - Import class contents from file???
 
@@ -66,16 +98,16 @@ async def changememberrole(role,user,remove=False):
 async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 	#attempts to get a role from reactemoji and reactobj, then add it to the user if the user is allowed to have it
 
-	print("roleaddremove beginning here :)")
+	#print("roleaddremove beginning here :)")
 	#role:
 	try:
 		role = discord.utils.get(msg.guild.roles, name = reactobj.reactdict[str(reactemoji)])
 	except Exception as e:
-		print(f"Failed to get role for emoji {reaction.emoji.name} - error {e}")
+		print(f"Failed to get role for emoji {reactemoji.name} - error {e}")
 		print(f"Reaction changed by {str(user)} on message in {msg.guild.name}, channel {msg.channel.name}, ID: {msg.id}")
 		return
 
-	print(f"successfully found a role {role.name}")
+	#print(f"successfully found a role {role.name}")
 
 	# If role has a permission role and the person has it, give role, else print note and return
 	if reactobj.permdict != None:
@@ -86,7 +118,7 @@ async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 				print(f"{str(user)} tried to add or remove role {role.name} but could not as they do not have role {prereq}")
 				return
 
-	print("User appears to have permission, passing to changememberrole")
+	#print("User appears to have permission, passing to changememberrole")
 	await changememberrole(role=role,user=user,remove=remove)
 
 
@@ -97,7 +129,7 @@ async def rolecheck():
 
 	for message in messagestocheck:
 
-		print(f"Working message at svr: {message.svr}, chnl: {message.chnl}, msg: {message.msg}\n\n")
+		print(f"Working message at svr: {message.svr}, chnl: {message.chnl}, msg: {message.msg}\n")
 	
 		msg = await bot.get_guild(message.svr).get_channel(message.chnl).fetch_message(message.msg)
 	
@@ -105,7 +137,7 @@ async def rolecheck():
 			try:
 				role = discord.utils.get(msg.guild.roles, name = message.reactdict[str(reaction.emoji)])
 			except Exception as e:
-				print(f"Failed to get role for emoji {reaction.emoji.name} - error {e}")
+				print(f"Failed to get role for emoji {str(reaction.emoji)} - error {e}")
 				continue
 	
 			reactmembers = await reaction.users().flatten() #List of people who have made that reaction
@@ -258,32 +290,37 @@ async def on_message(message):
 
 
 async def payloadhandle(payload,remove=False):
-	print(f"Parsing payload-----")
+	#print(f"Parsing payload-----")
 	for message in [a for a in messagestocheck if a.msg == payload.message_id]:
-		print("Reaction message ID matches a reactset, passing to roleaddremove\n")
+		#print("Reaction message ID matches a reactset, passing to roleaddremove\n")
 		target = await bot.fetch_user(payload.user_id)
 		msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
 		await roleaddremove(reactemoji=payload.emoji,user=target,msg=msg,reactobj=message,remove=remove)
 
 @bot.event
 async def on_raw_reaction_add(payload):
-	print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), add")
+	#print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), add")
 	await payloadhandle(payload=payload,remove=False)
 
 @bot.event
 async def on_raw_reaction_remove(payload):
-	print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), remove")
+	#print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), remove")
 	await payloadhandle(payload=payload,remove=True)
 
 
 
 @bot.event
 async def on_reaction_add(reaction, member):
-	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id}")
+	pass
+	#try:
+	#	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id} - emoji name {reaction.emoji.name}")
+	#except:
+	#	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id} - emoji name {reaction.emoji}")
 
 @bot.event
 async def on_reaction_remove(reaction, member):
-	print(f"Reaction removed in {reaction.message.channel.name} on message ID {reaction.message.id}")
+	pass
+	#print(f"Reaction removed in {reaction.message.channel.name} on message ID {reaction.message.id}")
 
 
 
