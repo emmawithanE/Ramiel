@@ -248,31 +248,56 @@ async def repeat(ctx, *args):
 
 	# vigenere cipher - only process on letters
 	for char in flipped:
-		if char.isalpha():
+		if char.isalpha(): #If the character is alphanumeric (a letter from a-z, upper or lower case)
 			offset = 0
 			if char.islower():
 				offset = 97 #'a'
 			else:
 				offset = 65 #'A'
 
-			num = ord(char) - offset
-			encoded = ( ( num + ( ord( key[letters % len(key)]) -97)) % 26) + offset
+			num = ord(char) - offset #convert letter to a number, A = 0, B = 1 and so on
 
-			output += chr(encoded)
+			encoded = ( ( num + ( ord( key[letters % len(key)]) -97)) % 26) + offset #"Add" number for the appropriate key character, loop around at Z=25, then shift back to letters
+
+			output += chr(encoded) #Add character to string
 
 			letters += 1
 
-		elif char.isnumeric():
-			encoded = 105 - ord(char)
+		elif char.isnumeric(): #If character is not a letter but is a digit:
+			encoded = 105 - ord(char) #Encoding
 
-			output += chr(encoded)
+			output += chr(encoded) #Add it to the string
 
-		else:
+		else: #If it's not a letter or a number:
 			output+= char
 
 
 
 	await ctx.send(output)
+
+
+
+@bot.command()
+async def image(ctx, *, name):
+	# Gets an image from the message attachment, saves it as "[name] - [submitter]" and posts it in the bot channel
+
+	image_types = ["png", "jpeg", "gif", "jpg"]
+	channel = bot.get_guild(413975787427987457).get_channel(689268656135471116)
+
+	if len(ctx.message.attachments) == 0:
+		ctx.send("No attachments found.")
+		return
+
+	count = 0
+
+	for att in ctx.message.attachments:
+		if any(att.filename.lower().endswith(image) for image in image_types):
+			filename = ctx.author.name + " - " + name + str(count);
+			count += 1
+
+			await att.save(filename)
+			await channel.send(file = await att.to_file(), content = filename)
+
 
 #----------------------------------------------------------------
 
