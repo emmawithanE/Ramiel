@@ -4,6 +4,13 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from pydrive.drive import GoogleDrive 
+from pydrive.auth import GoogleAuth 
+
+import random
+
+import asyncio
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
 
@@ -17,11 +24,16 @@ bot = commands.Bot(
 	intents = intents
 	)
 
+bot.remove_command('help')
 
-#reactdict = {
-#	"💜": "Heart",
-#	"🔑": "PuzzleSolver"
-#}
+Jnames = ("James", "Jacob", "Joseph", "Jackson", "Jayden", "John", "Jack", "Julian", "Joshua", "Jaxon", "Josiah", "Jonathan", "Jeremiah", "Jordan", "Jaxson", "Jose", "Jace", "Jason", "Jameson", "Justin", "Juan", "Jayce", "Jesus", "Jonah", "Jude", "Joel", "Jasper", "Jesse", "Jeremy", "Judah", "Jax", "Javier", "Jaden", "Jorge", "Josue", "Jake", "Jett", "Jaiden", "Jayceon", "Jeffrey", "Jase", "Julius", "Jensen", "Jaylen", "Johnny", "Johnathan", "Joaquin", "Jaxton", "Jay", "Jared", "Jamison", "Jonas", "Jayson", "Jaime", "Julio", "Johan", "Jerry", "Jamari", "Justice", "Jasiah", "Jimmy", "Jalen", "Julien", "Jakob", "Jagger", "Joe", "Jedidiah", "Jefferson", "Jamir", "Jaziel", "Jadiel", "Jaxen", "Jon", "Jeffery", "Jamal", "Jamie", "Joziah", "Juelz", "Jacoby", "Joey", "Jordy", "Jermaine", "Javion", "Jaxxon", "Jerome", "Junior", "Jairo", "Jabari", "Judson", "Jessie", "Javon", "Jad", "Jeremias", "Jovanni", "Jaxx", "Justus", "Jamarion", "Jesiah", "Jericho", "Jonathon")
+
+
+# get the Google Sheet used for tracking things people like
+# use creds to create a client to interact with the Google Drive API
+#scope = ['https://www.googleapis.com/auth/drive']
+#creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+#client = gspread.authorize(creds)
 
 class reactset:
 	def __init__(self,link,roles,perms=None):
@@ -44,15 +56,15 @@ messagestocheck.append(reactset(
 		"🔑": "PuzzleSolver"} ))
 
 #Test to make sure perms was working, kept around to demonstrate for future reference how to target custom emoji
-messagestocheck.append(reactset(
-	link="413975787427987457/689268656135471116/813726033689313330",
-	roles={
-		"🏳️‍🌈": "biggayrole",
-		"<:trans:702513977472581633>": "transrole",
-		"🚴": "birole"},
-	perms={
-		"transrole": "transpermission",
-		"birole": "transpermission"} ))
+#messagestocheck.append(reactset(
+#	link="413975787427987457/689268656135471116/813726033689313330",
+#	roles={
+#		"🏳️‍🌈": "biggayrole",
+#		"<:trans:702513977472581633>": "transrole",
+#		"🚴": "birole"},
+#	perms={
+#		"transrole": "transpermission",
+#		"birole": "transpermission"} ))
 
 #https://discord.com/channels/413975787427987457/676348033285357568/817998671827173376
 # Actual message in #welcome of the club
@@ -69,9 +81,22 @@ messagestocheck.append(reactset(
 		"heypeople": "People who definitely exist",
 		"Master of Games": "People who definitely exist"} ))
 
+#https://discord.com/channels/413975787427987457/414025610113974274/826821211123351593
+elements = reactset(
+	link="413975787427987457/414025610113974274/826821211123351593",
+	roles={
+		"🔥": "Fire",
+		"🌊": "Water",
+		"⛰️": "Earth",
+		"💨": "Air"}
+	)
 
-#WIP - Roles based on reactions?
+
+
+
 #TODO - Import class contents from file???
+
+
 
 async def changememberrole(role,user,remove=False):
 	if user.id == 268721746708791297:
@@ -120,7 +145,6 @@ async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 
 	#print("User appears to have permission, passing to changememberrole")
 	await changememberrole(role=role,user=user,remove=remove)
-
 
 
 
@@ -182,6 +206,34 @@ async def rolecheck():
 
 
 
+def rollk3(n):
+	rolls = []
+	for i in range(0,n):
+		rolls.append(random.randint(1,6))
+
+	return sum((sorted(rolls,reverse=True))[:3])
+
+@bot.command()
+async def matrix(ctx,n: int):
+	message = f"Rolling a matrix of {n}d6k3:\n```\n"
+
+	for row in range(0,6):
+		line = ""
+		for col in range(0,6):
+			line += str(rollk3(n)).rjust(3)
+		message += line
+		message += '\n'
+	message += "```"
+
+	await ctx.send(message)
+
+
+
+
+@bot.command()
+async def d10000(ctx):
+	await ctx.send(f"Rolled a d10000: {random.randint(1,10000)}")
+
 @bot.event
 async def on_ready():
 	print(f"Logged in as {bot.user}")
@@ -230,13 +282,13 @@ async def list(ctx):
 
 
 @bot.command()
-async def repeatthislineproperlyplease(ctx, *args):
+async def repeatbutnotmixedup(ctx, *args):
 	text = ' '.join(args) # the text of the message as a string
 	await ctx.send(text)
 
 @bot.command()
-async def repeat(ctx, *args):
-	text = ' '.join(args) # the text of the message as a string
+async def repeat(ctx):
+	text = ctx.message.content[(len(ctx.prefix)+7):] # the text of the message as a string
 
 	# reverse
 	flipped = text[::-1]
@@ -278,7 +330,7 @@ async def repeat(ctx, *args):
 
 
 @bot.command()
-async def image(ctx, *, name):
+async def pleaseacceptimage(ctx, *, name):
 	# Gets an image from the message attachment, saves it as "[name] - [submitter]" and posts it in the bot channel
 
 	image_types = ["png", "jpeg", "gif", "jpg"]
@@ -292,11 +344,59 @@ async def image(ctx, *, name):
 
 	for att in ctx.message.attachments:
 		if any(att.filename.lower().endswith(image) for image in image_types):
-			filename = ctx.author.name + " - " + name + str(count);
+			filename = ctx.author.name + " - " + name + str(count) + "." + att.filename.split(".")[-1];
 			count += 1
 
 			await att.save(filename)
 			await channel.send(file = await att.to_file(), content = filename)
+
+
+
+@bot.command()
+async def itsmybirthday(ctx):
+	# If it's Emily, send her an "image"
+
+	if (ctx.author.id != 293678032730980352 and ctx.author.id != 268721746708791297) :
+		await ctx.send("Are you sure? I wasn't told that...")
+		return
+
+	msg1  = "Oh, hi! You'll be here for your present, then! Let me just go fetch it...\n\n"
+	msg1 += "Printing present.png...\n"
+	msg1 += "Error: file present.png corrupted, dumping file data to output."
+	await ctx.send(msg1)
+
+	await asyncio.sleep(2)
+	await ctx.send(".")
+	await asyncio.sleep(2)
+	await ctx.send("..")
+	await asyncio.sleep(2)
+	await ctx.send("...")
+
+	dumpmsg = ""
+
+	with open("maze.txt", "r") as file:
+		for row in file:
+			if ((len(dumpmsg) + len(row)) < 1990):
+				dumpmsg += row
+
+			else:
+				await ctx.send(dumpmsg)
+				dumpmsg = row
+
+		await ctx.send(dumpmsg)
+
+	await ctx.send("-----\n\nData stream complete. Returning to normal operation.\n\n-----")
+
+	await ctx.send("I hope you enjoy it. Happy Birthday~")
+
+	notify = await bot.fetch_user(268721746708791297)
+	await notify.send("I just sent my birthday present!")
+
+
+
+
+#@bot.command()
+#async def emojiping(ctx,)
 
 
 #----------------------------------------------------------------
@@ -305,6 +405,11 @@ async def image(ctx, *, name):
 async def on_message(message):
 	if message.author == bot.user:
 		return
+
+	# Ignore Pride Club for the moment
+	if message.channel.type is not discord.ChannelType.private:
+		if message.guild.id == 697695776339394600:
+			return
 
 	if message.content.lower().startswith(('owo','uwu','hewwo')):
 		await message.channel.send('Ew, furry')
@@ -321,6 +426,8 @@ async def payloadhandle(payload,remove=False):
 		target = await bot.fetch_user(payload.user_id)
 		msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
 		await roleaddremove(reactemoji=payload.emoji,user=target,msg=msg,reactobj=message,remove=remove)
+
+
 
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -347,7 +454,14 @@ async def on_reaction_remove(reaction, member):
 	pass
 	#print(f"Reaction removed in {reaction.message.channel.name} on message ID {reaction.message.id}")
 
-
+@bot.event
+async def on_message_delete(message):
+	if message.author.id == 438606605496483850 and message.guild.id == 413975787427987457:
+		msg = Jnames[random.randrange(100)]
+		msg += " deleted a message, but I caught it! It said:\n```"
+		msg += message.content
+		msg += "\n```"
+		await message.channel.send(msg)
 
 
 bot.run(TOKEN)
