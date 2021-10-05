@@ -12,6 +12,7 @@ import random
 import asyncio
 
 load_dotenv()
+
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
 
 intents = discord.Intents.default()
