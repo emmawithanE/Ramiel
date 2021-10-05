@@ -32,9 +32,29 @@ Jnames = ("James", "Jacob", "Joseph", "Jackson", "Jayden", "John", "Jack", "Juli
 
 # get the Google Sheet used for tracking things people like
 # use creds to create a client to interact with the Google Drive API
-#scope = ['https://www.googleapis.com/auth/drive']
-#creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-#client = gspread.authorize(creds)
+scope = ['https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+client = gspread.authorize(creds)
+
+# Find a workbook by name and open the first sheet
+sheet = client.open("Secret Santa Responses")
+page = sheet.get_worksheet(0)
+
+
+
+# Generate names.txt if it doesn't exist already
+try:
+	open("names.txt", "x")
+	print('Created names.txt - was it deleted or moved?')
+except:
+	pass
+
+# Load current names.txt into local list
+names = []
+with open("names.txt", "r") as file:
+	for i in file:
+		line = i.split("|")
+		names.append((line[0], int(line[1]), line[2][:-1]))
 
 class reactset:
 	def __init__(self,link,roles,perms=None):
@@ -204,6 +224,45 @@ async def rolecheck():
 					print(f"Removed role {str(role)} from {str(user)}")
 				except Exception as e:
 					print(f"Failed to remove role {str(role)} from {str(user)} - {e}")
+
+
+
+@bot.command()
+async def enter(ctx, arg):
+	realname = arg
+	userID = ctx.author.id
+	discname = str(ctx.author)
+
+	names.append((realname,userID,discname))
+	await ctx.send(f"Added {realname} with Discord name {discname} to my Secret Santa list!")
+
+@bot.command()
+async def addperson(ctx, name, ID: int):
+	if 	(ctx.channel.id != 413979914900078592 and ctx.channel.id != 686928934411173912):
+		await ctx.send("This command can only be used in the Council channel.")
+		return
+	try:
+		target = await bot.fetch_user(ID)
+	except:
+		await ctx.send(f"Could not find a user with ID {ID}.")
+		return
+	names.append((name,ID,str(target)))
+	await ctx.send(f"Added {name}, {str(target)} on Discord, to my Secret Santa list.")
+	await target.send(f"Hi there! {str(ctx.author)} added you to my Secret Santa list under the name {name}! When I get to allocating names, you will be sent a message in this channel. If this is a mistake, please contact a club council member.")
+
+
+@bot.command()
+async def list(ctx):
+	for row in names:
+		await ctx.send(row)
+
+@bot.command()
+async def save(ctx):
+	namefile = open("names.txt","w+")
+	for name, ID, username in names:
+		namefile.write(name + "|" + str(ID) + "|" + username + "\n")
+	namefile.close()
+	await ctx.send("Saved!")
 
 
 
