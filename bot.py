@@ -31,7 +31,7 @@ bot = commands.Bot(
 bot.remove_command('help')
 
 Jnames = ("James", "Jacob", "Joseph", "Jackson", "Jayden", "John", "Jack", "Julian", "Joshua", "Jaxon", "Josiah", "Jonathan", "Jeremiah", "Jordan", "Jaxson", "Jose", "Jace", "Jason", "Jameson", "Justin", "Juan", "Jayce", "Jesus", "Jonah", "Jude", "Joel", "Jasper", "Jesse", "Jeremy", "Judah", "Jax", "Javier", "Jaden", "Jorge", "Josue", "Jake", "Jett", "Jaiden", "Jayceon", "Jeffrey", "Jase", "Julius", "Jensen", "Jaylen", "Johnny", "Johnathan", "Joaquin", "Jaxton", "Jay", "Jared", "Jamison", "Jonas", "Jayson", "Jaime", "Julio", "Johan", "Jerry", "Jamari", "Justice", "Jasiah", "Jimmy", "Jalen", "Julien", "Jakob", "Jagger", "Joe", "Jedidiah", "Jefferson", "Jamir", "Jaziel", "Jadiel", "Jaxen", "Jon", "Jeffery", "Jamal", "Jamie", "Joziah", "Juelz", "Jacoby", "Joey", "Jordy", "Jermaine", "Javion", "Jaxxon", "Jerome", "Junior", "Jairo", "Jabari", "Judson", "Jessie", "Javon", "Jad", "Jeremias", "Jovanni", "Jaxx", "Justus", "Jamarion", "Jesiah", "Jericho", "Jonathon")
-
+version_number = "1.0.4"
 
 # get the Google Sheet used for tracking things people like
 # use creds to create a client to interact with the Google Drive API
@@ -331,7 +331,7 @@ async def annoyEmmaByUser(ctx):
 @bot.command()
 async def list(ctx):
 	Emma = await bot.fetch_user(268721746708791297)
-	message = "```Ramiel v1.0.3 commands:\n"
+	message = f"```Ramiel v{version_number} commands:\n"
 	message += " - list: lists bot commands.\n"
 	message += " - ping: prompt a basic response.\n"
 	message += f" - annoyEmma: sends a message to Emma ({str(Emma)}).\n"
