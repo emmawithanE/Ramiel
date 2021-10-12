@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 from pydrive.drive import GoogleDrive 
 from pydrive.auth import GoogleAuth 
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 import random
 
 import asyncio
@@ -252,7 +255,7 @@ async def addperson(ctx, name, ID: int):
 
 
 @bot.command()
-async def list(ctx):
+async def listnames(ctx):
 	for row in names:
 		await ctx.send(row)
 
