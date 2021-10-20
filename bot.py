@@ -267,6 +267,121 @@ async def save(ctx):
 	namefile.close()
 	await ctx.send("Saved!")
 
+@bot.command()
+async def showlikes(ctx, arg):
+	try:
+		row = page.find(arg).row
+	except:
+		print(f"Could not find cell containing {arg}.\n\n")
+		return
+	likes = page.row_values(row)
+	labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+
+	msg = ''
+	paragraph = ''
+
+	for i in range(1,11):
+		paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+		if (len(msg) + len(paragraph) < 1990):
+			# paragraph can fit in message still
+			msg += paragraph
+			print(f"Combining line {i} into msg")
+		else:
+			#paragraph is too large to add, send message and start a new one
+			await ctx.send(msg)
+			msg = paragraph
+			print(f"Printing message at line {i-1}")
+
+	await ctx.send(msg)
+
+
+
+@bot.command()
+async def fire(ctx):
+	allowed = [268721746708791297, 218978216805793794, 180597311309742080]
+	if ctx.author.id not in allowed:
+		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(268721746708791297).name} (or, temporarily, her partners).")
+		return
+	else:
+		recipients = names.copy()
+
+		# randomly shuffle recipients list
+		random.shuffle(recipients)
+		print("Shuffling first time!")
+
+		matched = True
+
+		# shuffle again as long as any names are in the same place between the two
+		while matched == True:
+
+			matched = False
+
+			for a, b in zip(names,recipients):
+
+				# compare user IDs as they are most guaranteed separate and unchanging
+				if a[1] == b[1]:
+					#need to reshuffle and try again
+					random.shuffle(recipients)
+					print("Match! Shuffled again.")
+					matched = True
+					break
+
+		print("Shuffle complete, hopefully! Sending names...")
+
+		for a, b in zip(names,recipients):
+			recname = b[0]
+			recdisc = b[2]
+
+			givname = a[0]
+			givID = a[1]
+
+			# send a message through givID to givname, naming recname and recdisc
+			giver = await bot.fetch_user(givID)
+			await giver.send(f"Hi {givname}! If I messaged you just now, please disregard that, Jame fucked up. I have randomly allocated Secret Santa names *again*, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Jame!")
+
+
+
+			try:
+				row = page.find(recdisc).row
+
+				likes = page.row_values(row)
+				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+
+				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
+				msg = ''
+				paragraph = ''
+
+				for i in range(1,11):
+					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+					if (len(msg) + len(paragraph) < 1990):
+						# paragraph can fit in message still
+						msg += paragraph
+						print(f"Combining line {i} into msg")
+					else:
+						#paragraph is too large to add, send message and start a new one
+						await giver.send(msg)
+						msg = paragraph
+						print(f"Printing message at line {i-1}")
+
+				await giver.send(msg)
+
+			except:
+				print(f"Could not find cell containing {recdisc}.\n\n")
+				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Jame!")
+
+		try:
+			open("DONT_FUCKING_OPEN_THIS.txt", "x")
+			print('Created DONT_FUCKING_OPEN_THIS.txt')
+		except:
+			pass
+
+		DONT = open("DONT_FUCKING_OPEN_THIS.txt","w+")
+		DONT.write("Recipients, in order of names.txt:\n\n")
+		for name, ID, username in recipients:
+			DONT.write(name + "\n")
+		DONT.close()
+		await ctx.send("Created DONT_FUCKING_OPEN_THIS.txt!")
+
 
 
 def rollk3(n):
