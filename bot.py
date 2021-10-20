@@ -382,6 +382,57 @@ async def fire(ctx):
 		DONT.close()
 		await ctx.send("Created DONT_FUCKING_OPEN_THIS.txt!")
 
+@bot.command()
+async def retry(ctx):
+	allowed = [268721746708791297, 218978216805793794, 180597311309742080]
+	if ctx.author.id not in allowed:
+		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(268721746708791297).name} (or, temporarily, her partners).")
+		return
+	recipients = []
+	with open("DONT_FUCKING_OPEN_THIS.txt", "r") as recip:
+		for i in recip:
+			line = i.split("|")
+			recipients.append((line[0], int(line[1]), line[2][:-1]))
+
+	for a, b in zip(names,recipients):
+			recname = b[0]
+			recdisc = b[2]
+
+			givname = a[0]
+			givID = a[1]
+
+			# send a message through givID to givname, naming recname and recdisc
+			giver = await bot.fetch_user(givID)
+			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
+
+			try:
+				row = page.find(recdisc).row
+
+				likes = page.row_values(row)
+				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+
+				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
+				msg = ''
+				paragraph = ''
+
+				for i in range(1,11):
+					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+					if (len(msg) + len(paragraph) < 1990):
+						# paragraph can fit in message still
+						msg += paragraph
+						print(f"Combining line {i} into msg")
+					else:
+						#paragraph is too large to add, send message and start a new one
+						await giver.send(msg)
+						msg = paragraph
+						print(f"Printing message at line {i-1}")
+
+				await giver.send(msg)
+
+			except:
+				print(f"Could not find cell containing {recdisc}.\n\n")
+				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
+
 
 
 def rollk3(n):
