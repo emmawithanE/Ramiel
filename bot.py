@@ -337,7 +337,7 @@ async def fire(ctx):
 
 			# send a message through givID to givname, naming recname and recdisc
 			giver = await bot.fetch_user(givID)
-			await giver.send(f"Hi {givname}! If I messaged you just now, please disregard that, Jame fucked up. I have randomly allocated Secret Santa names *again*, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Jame!")
+			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
 
 
 
@@ -367,7 +367,7 @@ async def fire(ctx):
 
 			except:
 				print(f"Could not find cell containing {recdisc}.\n\n")
-				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Jame!")
+				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
 
 		try:
 			open("DONT_FUCKING_OPEN_THIS.txt", "x")
