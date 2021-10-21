@@ -15,7 +15,6 @@ import random
 import asyncio
 
 load_dotenv()
-
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
 
 intents = discord.Intents.default()
@@ -98,12 +97,26 @@ messagestocheck.append(reactset(
 		"⭐": "Dog Star",
 		"🍆": "OH&S hazard",
 		"🏖️": "heypeople",
-		"📝": "Master of Games"},
+		"📝": "Master of Games",
+		"📖": "book club"},
 	perms={
 		"Dog Star": "People who definitely exist",
 		"OH&S hazard": "People who definitely exist",
 		"heypeople": "People who definitely exist",
-		"Master of Games": "People who definitely exist"} ))
+		"Master of Games": "People who definitely exist",
+		"book club": "People who definitely exist"} ))
+
+#https://discord.com/channels/413975787427987457/414025610113974274/826821211123351593
+elements = reactset(
+	link="413975787427987457/414025610113974274/826821211123351593",
+	roles={
+		"🔥": "Fire",
+		"🌊": "Water",
+		"⛰️": "Earth",
+		"💨": "Air"}
+	)
+
+
 
 #https://discord.com/channels/413975787427987457/414025610113974274/826821211123351593
 elements = reactset(
