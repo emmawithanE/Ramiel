@@ -640,8 +640,9 @@ async def itsmybirthday(ctx):
 @commands.is_owner()
 async def update(ctx):
 	await ctx.send("Restarting!")
-	p = asyncio.create_subprocess_exec('git', 'pull')
+	p = await asyncio.create_subprocess_exec('git', 'pull')
 	await p.wait()
+	await ctx.send("Complete!")
 	sys.exit()
 	
 
