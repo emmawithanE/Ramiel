@@ -644,7 +644,19 @@ async def update(ctx):
 	await p.wait()
 	sys.exit()
 	
-	
+
+
+@bot.command()
+@client.is_owner()
+async def goodnight(ctx):
+	await ctx.send("Good night :)")
+	sys.exit(1)
+
+@bot.command()
+@client.is_owner()
+async def kill(ctx):
+	await ctx.send("Please no I beg you-")
+	sys.exit(1)
 
 #@bot.command()
 #async def emojiping(ctx,)
