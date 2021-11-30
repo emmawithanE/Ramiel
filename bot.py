@@ -637,7 +637,7 @@ async def itsmybirthday(ctx):
 
 
 @bot.command()
-@bot.is_owner()
+@commands.is_owner()
 async def update(ctx):
 	await ctx.send("Restarting!")
 	p = asyncio.create_subprocess_exec('git', 'pull')
@@ -647,13 +647,13 @@ async def update(ctx):
 
 
 @bot.command()
-@bot.is_owner()
+@commands.is_owner()
 async def goodnight(ctx):
 	await ctx.send("Good night :)")
 	sys.exit(1)
 
 @bot.command()
-@bot.is_owner()
+@commands.is_owner()
 async def kill(ctx):
 	await ctx.send("Please no I beg you-")
 	sys.exit(1)
