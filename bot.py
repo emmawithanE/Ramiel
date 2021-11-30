@@ -1,4 +1,7 @@
 import os
+import sys
+import random
+import asyncio
 
 import discord
 from discord.ext import commands
@@ -10,9 +13,6 @@ from pydrive.auth import GoogleAuth
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-import random
-
-import asyncio
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
@@ -636,6 +636,15 @@ async def itsmybirthday(ctx):
 
 
 
+@bot.command()
+@client.is_owner()
+async def update(ctx):
+	await ctx.send("Restarting!")
+	p = asyncio.create_subprocess_exec('git', 'pull')
+	await p.wait()
+	sys.exit()
+	
+	
 
 #@bot.command()
 #async def emojiping(ctx,)
