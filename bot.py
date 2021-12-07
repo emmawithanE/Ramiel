@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 
 from pydrive.drive import GoogleDrive 
 from pydrive.auth import GoogleAuth 
-
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+import var
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN_RAM')
@@ -27,13 +27,12 @@ bot = commands.Bot(
 	intents = intents
 	)
 
+# Help command removed to hide the existence of some commands
+# TODO: Limit these commands more directly, as needed
 bot.remove_command('help')
 
-Jnames = ("James", "Jacob", "Joseph", "Jackson", "Jayden", "John", "Jack", "Julian", "Joshua", "Jaxon", "Josiah", "Jonathan", "Jeremiah", "Jordan", "Jaxson", "Jose", "Jace", "Jason", "Jameson", "Justin", "Juan", "Jayce", "Jesus", "Jonah", "Jude", "Joel", "Jasper", "Jesse", "Jeremy", "Judah", "Jax", "Javier", "Jaden", "Jorge", "Josue", "Jake", "Jett", "Jaiden", "Jayceon", "Jeffrey", "Jase", "Julius", "Jensen", "Jaylen", "Johnny", "Johnathan", "Joaquin", "Jaxton", "Jay", "Jared", "Jamison", "Jonas", "Jayson", "Jaime", "Julio", "Johan", "Jerry", "Jamari", "Justice", "Jasiah", "Jimmy", "Jalen", "Julien", "Jakob", "Jagger", "Joe", "Jedidiah", "Jefferson", "Jamir", "Jaziel", "Jadiel", "Jaxen", "Jon", "Jeffery", "Jamal", "Jamie", "Joziah", "Juelz", "Jacoby", "Joey", "Jordy", "Jermaine", "Javion", "Jaxxon", "Jerome", "Junior", "Jairo", "Jabari", "Judson", "Jessie", "Javon", "Jad", "Jeremias", "Jovanni", "Jaxx", "Justus", "Jamarion", "Jesiah", "Jericho", "Jonathon")
-version_number = "1.0.6"
-
-# get the Google Sheet used for tracking things people like
-# use creds to create a client to interact with the Google Drive API
+# Get the Google Sheet used for tracking things people like
+# Use creds to create a client to interact with the Google Drive API
 scope = ['https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 client = gspread.authorize(creds)
@@ -43,6 +42,8 @@ sheet = client.open("Secret Santa Responses")
 page = sheet.get_worksheet(0)
 
 
+
+# Initialise data structure used for Secret Santa
 
 # Generate names.txt if it doesn't exist already
 try:
@@ -58,6 +59,13 @@ with open("names.txt", "r") as file:
 		line = i.split("|")
 		names.append((line[0], int(line[1]), line[2][:-1]))
 
+
+
+# Initialise data structure used for role checking
+
+# reactset is a structure that contains a reference to a message, and a dictionary of reaction : role to give
+# permdict is a dictionary of role : permission role, such that a user cannot get role unless they have permission role
+# TODO: Import contents from an external file
 class reactset:
 	def __init__(self,link,roles,perms=None):
 		linklist = link.split("/")
@@ -70,29 +78,17 @@ class reactset:
 
 messagestocheck = []
 
-#append new messages to check
-#perms are a dict of role to be limited : role required to have it
+# Append new messages to watch for reaction changes
+# Message in test channel on private Discord server
 messagestocheck.append(reactset(
-	link="686753804137267207/686753804137267288/811388529438883870",
+	link=var.msg_test,
 	roles={
 		"💜": "Heart",
 		"🔑": "PuzzleSolver"} ))
 
-#Test to make sure perms was working, kept around to demonstrate for future reference how to target custom emoji
-#messagestocheck.append(reactset(
-#	link="413975787427987457/689268656135471116/813726033689313330",
-#	roles={
-#		"🏳️‍🌈": "biggayrole",
-#		"<:trans:702513977472581633>": "transrole",
-#		"🚴": "birole"},
-#	perms={
-#		"transrole": "transpermission",
-#		"birole": "transpermission"} ))
-
-#https://discord.com/channels/413975787427987457/676348033285357568/817998671827173376
 # Actual message in #welcome of the club
 messagestocheck.append(reactset(
-	link="413975787427987457/676348033285357568/817998671827173376",
+	link=var.msg_welcome,
 	roles={
 		"⭐": "Dog Star",
 		"🍆": "OH&S hazard",
@@ -106,9 +102,9 @@ messagestocheck.append(reactset(
 		"Master of Games": "People who definitely exist",
 		"book club": "People who definitely exist"} ))
 
-#https://discord.com/channels/413975787427987457/414025610113974274/826821211123351593
+# April Fools announcement message in club server
 elements = reactset(
-	link="413975787427987457/414025610113974274/826821211123351593",
+	link=var.msg_elements,
 	roles={
 		"🔥": "Fire",
 		"🌊": "Water",
@@ -118,37 +114,21 @@ elements = reactset(
 
 
 
-#https://discord.com/channels/413975787427987457/414025610113974274/826821211123351593
-elements = reactset(
-	link="413975787427987457/414025610113974274/826821211123351593",
-	roles={
-		"🔥": "Fire",
-		"🌊": "Water",
-		"⛰️": "Earth",
-		"💨": "Air"}
-	)
-
-
-
-
-#TODO - Import class contents from file???
-
-
-
+# Either give specified role to specified user, or take it away
 async def changememberrole(role,user,remove=False):
-	if user.id == 268721746708791297:
+	if user.id == bot.owner_id:
 		return
 
 	if remove:
 		try:
-			member = await role.guild.fetch_member(user.id) #This is the dumbest fucking thing
+			member = await role.guild.fetch_member(user.id)
 			await member.remove_roles(role,reason="Removed reaction")
 			print(f"Removed role {role.name} from {str(user)}")
 		except Exception as e:
 			print(f"Failed to remove role {role.name} from {str(user)} - {e}")
 	else:
 		try:
-			member = await role.guild.fetch_member(user.id) #This is the dumbest fucking thing
+			member = await role.guild.fetch_member(user.id)
 			await member.add_roles(role,reason="Added reaction")
 			print(f"Added role {role.name} to {str(user)}")
 		except Exception as e:
@@ -156,12 +136,10 @@ async def changememberrole(role,user,remove=False):
 	pass
 
 
-
+# Attempts to get a role from reactemoji and reactobj, then add it to the user if the user is allowed to have it
 async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
-	#attempts to get a role from reactemoji and reactobj, then add it to the user if the user is allowed to have it
 
-	#print("roleaddremove beginning here :)")
-	#role:
+	# Determine what role is to be added
 	try:
 		role = discord.utils.get(msg.guild.roles, name = reactobj.reactdict[str(reactemoji)])
 	except Exception as e:
@@ -169,9 +147,7 @@ async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 		print(f"Reaction changed by {str(user)} on message in {msg.guild.name}, channel {msg.channel.name}, ID: {msg.id}")
 		return
 
-	#print(f"successfully found a role {role.name}")
-
-	# If role has a permission role and the person has it, give role, else print note and return
+	# If role has a permission role and the person has it, or if there is no permission role, give role, else print note and return
 	if reactobj.permdict != None:
 		prereq = reactobj.permdict.get(role.name)
 		if prereq != None:
@@ -180,13 +156,11 @@ async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 				print(f"{str(user)} tried to add or remove role {role.name} but could not as they do not have role {prereq}")
 				return
 
-	#print("User appears to have permission, passing to changememberrole")
 	await changememberrole(role=role,user=user,remove=remove)
 
 
-
+# For all messages that should be checked, check them (and update roles as needed)
 async def rolecheck():
-	#https://discord.com/channels/686753804137267207/686753804137267288/811388529438883870 test message in my server
 
 	for message in messagestocheck:
 
@@ -215,19 +189,12 @@ async def rolecheck():
 					permitted = roleneeded.members
 					addrole = addrole & set(permitted)
 
-
-	
-			#print(reactmembers)
-			#print(rolemembers)
-			#print(addrole)
-			#print(remrole)
-	
 			for user in addrole:
-				if user.id == 268721746708791297:
+				if user.id == bot.owner_id:
 					continue
 
 				try:
-					member = await msg.guild.fetch_member(user.id) #This is the dumbest fucking thing
+					member = await msg.guild.fetch_member(user.id)
 					await member.add_roles(role)
 					print(f"Added role {str(role)} to {str(user)}")
 				except Exception as e:
@@ -243,6 +210,9 @@ async def rolecheck():
 
 
 
+# Bot commands begin here
+
+# Enter the user to the current Secret Santa list
 @bot.command()
 async def enter(ctx, arg):
 	realname = arg
@@ -252,9 +222,10 @@ async def enter(ctx, arg):
 	names.append((realname,userID,discname))
 	await ctx.send(f"Added {realname} with Discord name {discname} to my Secret Santa list!")
 
+# Enter another user to the current Secret Santa list, limited to official channels to prevent misuse
 @bot.command()
 async def addperson(ctx, name, ID: int):
-	if 	(ctx.channel.id != 413979914900078592 and ctx.channel.id != 686928934411173912):
+	if 	(ctx.channel.id != var.chn_council and ctx.channel.id != var.chn_ownerDM):
 		await ctx.send("This command can only be used in the Council channel.")
 		return
 	try:
@@ -266,12 +237,13 @@ async def addperson(ctx, name, ID: int):
 	await ctx.send(f"Added {name}, {str(target)} on Discord, to my Secret Santa list.")
 	await target.send(f"Hi there! {str(ctx.author)} added you to my Secret Santa list under the name {name}! When I get to allocating names, you will be sent a message in this channel. If this is a mistake, please contact a club council member.")
 
-
+# List the current people in the Secret Santa list
 @bot.command()
 async def listnames(ctx):
 	for row in names:
 		await ctx.send(row)
 
+# Write the current state of the Secret Santa list to names.txt
 @bot.command()
 async def save(ctx):
 	namefile = open("names.txt","w+")
@@ -280,6 +252,8 @@ async def save(ctx):
 	namefile.close()
 	await ctx.send("Saved!")
 
+# Show the Google Sheet responses for a named user (technically any string that can be found in the Sheet)
+# TODO: Limit search range to the relevant column of the Google Sheet?
 @bot.command()
 async def showlikes(ctx, arg):
 	try:
@@ -307,13 +281,12 @@ async def showlikes(ctx, arg):
 
 	await ctx.send(msg)
 
-
-
+# Randomly assign each person in the Secret Santa list a giftee, then send allocation information in DMs
+# Logs the list of assignments in DO_NOT_OPEN.txt, for reference if needed
 @bot.command()
 async def fire(ctx):
-	allowed = [268721746708791297, 218978216805793794, 180597311309742080]
-	if ctx.author.id not in allowed:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(268721746708791297).name} (or, temporarily, her partners).")
+	if ctx.author.id != bot.owner_id and ctx.author.id not in var.usr_partners:
+		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or her partners).")
 		return
 	else:
 		recipients = names.copy()
@@ -326,11 +299,8 @@ async def fire(ctx):
 
 		# shuffle again as long as any names are in the same place between the two
 		while matched == True:
-
 			matched = False
-
 			for a, b in zip(names,recipients):
-
 				# compare user IDs as they are most guaranteed separate and unchanging
 				if a[1] == b[1]:
 					#need to reshuffle and try again
@@ -351,8 +321,6 @@ async def fire(ctx):
 			# send a message through givID to givname, naming recname and recdisc
 			giver = await bot.fetch_user(givID)
 			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
-
-
 
 			try:
 				row = page.find(recdisc).row
@@ -383,26 +351,27 @@ async def fire(ctx):
 				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
 
 		try:
-			open("DONT_FUCKING_OPEN_THIS.txt", "x")
-			print('Created DONT_FUCKING_OPEN_THIS.txt')
+			open("DO_NOT_OPEN.txt", "x")
+			print('Created DO_NOT_OPEN.txt')
 		except:
 			pass
 
-		DONT = open("DONT_FUCKING_OPEN_THIS.txt","w+")
+		DONT = open("DO_NOT_OPEN.txt","w+")
 		DONT.write("Recipients, in order of names.txt:\n\n")
 		for name, ID, username in recipients:
-			DONT.write(name + "\n")
+			DONT.write(name + "|" + str(ID) + "|" + username + "\n")
 		DONT.close()
-		await ctx.send("Created DONT_FUCKING_OPEN_THIS.txt!")
+		await ctx.send("Created DO_NOT_OPEN.txt!")
 
+# Attempt to send allocations again, without reshuffling
+# TODO: Function is untested and possibly broken, test before potential use
 @bot.command()
 async def retry(ctx):
-	allowed = [268721746708791297, 218978216805793794, 180597311309742080]
-	if ctx.author.id not in allowed:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(268721746708791297).name} (or, temporarily, her partners).")
+	if ctx.author.id != bot.owner_id and ctx.author.id not in var.usr_partners:
+		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or, temporarily, her partners).")
 		return
 	recipients = []
-	with open("DONT_FUCKING_OPEN_THIS.txt", "r") as recip:
+	with open("DO_NOT_OPEN.txt", "r") as recip:
 		for i in recip:
 			line = i.split("|")
 			recipients.append((line[0], int(line[1]), line[2][:-1]))
@@ -446,8 +415,7 @@ async def retry(ctx):
 				print(f"Could not find cell containing {recdisc}.\n\n")
 				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
 
-
-
+# Dice roll: rolls n 6 sided dice and returns the sum of the three highest rolls
 def rollk3(n):
 	rolls = []
 	for i in range(0,n):
@@ -455,6 +423,7 @@ def rollk3(n):
 
 	return sum((sorted(rolls,reverse=True))[:3])
 
+# Roll a 6 by 6 grid of n six sided dice keep 3, for obscure D&D stat generation method
 @bot.command()
 async def matrix(ctx,n: int):
 	message = f"Rolling a matrix of {n}d6k3:\n```\n"
@@ -469,65 +438,57 @@ async def matrix(ctx,n: int):
 
 	await ctx.send(message)
 
-
-
-
+# Dice roll: rolls a 10,000 sided dice
 @bot.command()
 async def d10000(ctx):
 	await ctx.send(f"Rolled a d10000: {random.randint(1,10000)}")
 
-@bot.event
-async def on_ready():
-	print(f"Logged in as {bot.user}")
-	await rolecheck()
-	print("Initial rolecheck complete")
-	# await bot.change_presence(status=discord.Status.invisible)
-
-# basic feedback
+# Basic feedback to check responsiveness
 @bot.command()
 async def ping(ctx):
 	await ctx.send('pong!')
 
+# Initiate a check for changes in roles that the bot is tracking
 @bot.command()
 async def role(ctx):
 	await rolecheck()
 	await ctx.send("Roles updated, hopefully")
 
+# Send me a DM (testing function that was left in because people enjoy using it on me)
 @bot.command()
 async def annoyEmma(ctx):
-	channel = await bot.fetch_channel(686928934411173912)
+	channel = await bot.fetch_channel(var.chn_ownerDM)
 	await channel.send("owo what's this")
 
-
-
+# Send me a DM (testing function that was left in because people enjoy using it on me)
 @bot.command()
 async def annoyEmmaByUser(ctx):
-	target = await bot.fetch_user(268721746708791297)
+	target = await bot.fetch_user(bot.owner_id)
 	await target.send("uwu what's this")
 
-
-
+# List the currently available commands
+# Some commands not listed to hide their existence
 @bot.command()
 async def list(ctx):
-	Emma = await bot.fetch_user(268721746708791297)
-	message = f"```Ramiel v{version_number} commands:\n"
+	Emma = await bot.fetch_user(bot.owner_id)
+	message = f"```Ramiel v{var.version_number} commands:\n"
 	message += " - list: lists bot commands.\n"
 	message += " - ping: prompt a basic response.\n"
 	message += f" - annoyEmma: sends a message to Emma ({str(Emma)}).\n"
 	message += " - annoyEmmaByUser: sends a different message to Emma, using a different targeting method.\n"
-	message += " - role: tells the bot to update member roles based on reactions. Currently only applies to a test server.\n"
 	message += " - repeat: repeats what you say back to you. WARNING: In Progress."
 	message += "```"
 
 	await ctx.send(message)
 
-
-
+# Repeat the text of the comment back without modification
 @bot.command()
 async def repeatbutnotmixedup(ctx, *args):
 	text = ' '.join(args) # the text of the message as a string
 	await ctx.send(text)
 
+# Repeat the text of the comment after application of a simple code encryption
+# Was used as a fun puzzle for people
 @bot.command()
 async def repeat(ctx):
 	text = ctx.message.content[(len(ctx.prefix)+7):] # the text of the message as a string
@@ -535,7 +496,7 @@ async def repeat(ctx):
 	# reverse
 	flipped = text[::-1]
 
-	key = "onethreeseven"
+	key = var.key
 	letters = 0 #for tracking and skipping not-letters correctly
 
 	output = ""
@@ -565,18 +526,14 @@ async def repeat(ctx):
 		else: #If it's not a letter or a number:
 			output+= char
 
-
-
 	await ctx.send(output)
 
-
-
+# Get image attachments to the message and save them locally as "[filename] - [submitter]", as well as posting it in a channel
 @bot.command()
 async def pleaseacceptimage(ctx, *, name):
-	# Gets an image from the message attachment, saves it as "[name] - [submitter]" and posts it in the bot channel
 
 	image_types = ["png", "jpeg", "gif", "jpg"]
-	channel = bot.get_guild(413975787427987457).get_channel(689268656135471116)
+	channel = bot.get_guild(var.svr_club).get_channel(var.chn_bot)
 
 	if len(ctx.message.attachments) == 0:
 		ctx.send("No attachments found.")
@@ -586,19 +543,16 @@ async def pleaseacceptimage(ctx, *, name):
 
 	for att in ctx.message.attachments:
 		if any(att.filename.lower().endswith(image) for image in image_types):
-			filename = ctx.author.name + " - " + name + str(count) + "." + att.filename.split(".")[-1];
+			filename = ctx.author.name + " - " + name + str(count) + "." + att.filename.split(".")[-1]
 			count += 1
 
 			await att.save(filename)
 			await channel.send(file = await att.to_file(), content = filename)
 
-
-
+# For a specific account belonging to a friend, deliver a "birthday present"
 @bot.command()
 async def itsmybirthday(ctx):
-	# If it's Emily, send her an "image"
-
-	if (ctx.author.id != 293678032730980352 and ctx.author.id != 268721746708791297) :
+	if (ctx.author.id != var.usr_birthday and ctx.author.id != bot.owner_id) :
 		await ctx.send("Are you sure? I wasn't told that...")
 		return
 
@@ -628,14 +582,11 @@ async def itsmybirthday(ctx):
 		await ctx.send(dumpmsg)
 
 	await ctx.send("-----\n\nData stream complete. Returning to normal operation.\n\n-----")
-
 	await ctx.send("I hope you enjoy it. Happy Birthday~")
-
-	notify = await bot.fetch_user(268721746708791297)
+	notify = await bot.fetch_user(bot.owner_id)
 	await notify.send("I just sent my birthday present!")
 
-
-
+# Update the bot using git pull and then restart it
 @bot.command()
 @commands.is_owner()
 async def update(ctx):
@@ -645,34 +596,41 @@ async def update(ctx):
 	await ctx.send("Complete!")
 	sys.exit()
 	
-
-
+# Shut down the bot, exiting the script that restarts it again for the update command
 @bot.command()
 @commands.is_owner()
 async def goodnight(ctx):
 	await ctx.send("Good night :)")
 	sys.exit(1)
 
+# Equivalent to goodnight, but with a different message
 @bot.command()
 @commands.is_owner()
 async def kill(ctx):
 	await ctx.send("Please no I beg you-")
 	sys.exit(1)
 
+# Ping all users that replied to a given message with a given emoji
+# TODO: Implement this function
 #@bot.command()
 #async def emojiping(ctx,)
 
-
 #----------------------------------------------------------------
+
+@bot.event
+async def on_ready():
+	print(f"Logged in as {bot.user}")
+	await rolecheck()
+	print("Initial rolecheck complete")
 
 @bot.event
 async def on_message(message):
 	if message.author == bot.user:
 		return
 
-	# Ignore Pride Club for the moment
+	# Ignore all messages from a specific server that the bot is only in for checking
 	if message.channel.type is not discord.ChannelType.private:
-		if message.guild.id == 697695776339394600:
+		if message.guild.id == var.svr_ignore:
 			return
 
 	if message.content.lower().startswith(('owo','uwu','hewwo')):
@@ -680,9 +638,7 @@ async def on_message(message):
 
 	await bot.process_commands(message)
 
-
-
-
+# Process a reaction payload to pass relevant data on to other functions
 async def payloadhandle(payload,remove=False):
 	#print(f"Parsing payload-----")
 	for message in [a for a in messagestocheck if a.msg == payload.message_id]:
@@ -690,7 +646,6 @@ async def payloadhandle(payload,remove=False):
 		target = await bot.fetch_user(payload.user_id)
 		msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
 		await roleaddremove(reactemoji=payload.emoji,user=target,msg=msg,reactobj=message,remove=remove)
-
 
 
 @bot.event
@@ -703,29 +658,14 @@ async def on_raw_reaction_remove(payload):
 	#print(f"\n\nReaction payload: {payload.emoji.name} by {str(payload.member)} ({payload.user_id}), remove")
 	await payloadhandle(payload=payload,remove=True)
 
-
-
-@bot.event
-async def on_reaction_add(reaction, member):
-	pass
-	#try:
-	#	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id} - emoji name {reaction.emoji.name}")
-	#except:
-	#	print(f"Reaction noticed in {reaction.message.channel.name} on message ID {reaction.message.id} - emoji name {reaction.emoji}")
-
-@bot.event
-async def on_reaction_remove(reaction, member):
-	pass
-	#print(f"Reaction removed in {reaction.message.channel.name} on message ID {reaction.message.id}")
-
+# Poke fun at a particular user when one of their messages is deleted
 @bot.event
 async def on_message_delete(message):
-	if message.author.id == 438606605496483850 and message.guild.id == 413975787427987457:
-		msg = Jnames[random.randrange(100)]
+	if message.author.id == var.usr_j and message.guild.id == var.svr_club:
+		msg = var.jnames[random.randrange(100)]
 		msg += " deleted a message, but I caught it! It said:\n```"
 		msg += message.content
 		msg += "\n```"
 		await message.channel.send(msg)
-
 
 bot.run(TOKEN)
