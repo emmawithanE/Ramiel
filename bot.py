@@ -106,7 +106,7 @@ messagestocheck.append(reactset(
 messagestocheck.append(reactset(
 	link=var.msg_lfg,
 	roles={
-		"👀": ""} ))
+		"👀": "looking for games"} ))
 
 # April Fools announcement message in club server
 elements = reactset(
