@@ -102,6 +102,12 @@ messagestocheck.append(reactset(
 		"Master of Games": "People who definitely exist",
 		"book club": "People who definitely exist"} ))
 
+# Club #welcome channel LFG message
+messagestocheck.append(reactset(
+	link=var.msg_lfg,
+	roles={
+		"👀": ""} ))
+
 # April Fools announcement message in club server
 elements = reactset(
 	link=var.msg_elements,
@@ -285,8 +291,8 @@ async def showlikes(ctx, arg):
 # Logs the list of assignments in DO_NOT_OPEN.txt, for reference if needed
 @bot.command()
 async def fire(ctx):
-	if ctx.author.id != bot.owner_id and ctx.author.id not in var.usr_partners:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or her partners).")
+	if ctx.author.id != bot.owner_id and ctx.author.id != var.usr_partner:
+		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or her partner).")
 		return
 	else:
 		recipients = names.copy()
@@ -367,8 +373,8 @@ async def fire(ctx):
 # TODO: Function is untested and possibly broken, test before potential use
 @bot.command()
 async def retry(ctx):
-	if ctx.author.id != bot.owner_id and ctx.author.id not in var.usr_partners:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or, temporarily, her partners).")
+	if ctx.author.id != bot.owner_id and ctx.author.id != var.usr_partner:
+		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or, temporarily, her partner).")
 		return
 	recipients = []
 	with open("DO_NOT_OPEN.txt", "r") as recip:
@@ -611,6 +617,7 @@ async def kill(ctx):
 	sys.exit(1)
 
 # Ping all users that replied to a given message with a given emoji
+# Experimental
 # TODO: Implement this function
 #@bot.command()
 #async def emojiping(ctx,)
@@ -633,7 +640,7 @@ async def on_message(message):
 		if message.guild.id == var.svr_ignore:
 			return
 
-	if message.content.lower().startswith(('owo','uwu','hewwo')):
+	if message.content.lower().startswith(('owo','uwu','hewwo')) and message.guild.id == var.svr_club:
 		await message.channel.send('Ew, furry')
 
 	await bot.process_commands(message)
