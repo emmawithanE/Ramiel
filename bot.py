@@ -540,10 +540,10 @@ async def itsmybirthday(ctx):
 @bot.command()
 @commands.is_owner()
 async def update(ctx):
-	await ctx.send("Restarting!")
+	await ctx.send("Trying to update code...")
 	p = await asyncio.create_subprocess_exec('git', 'pull')
 	await p.wait()
-	await ctx.send("Complete!")
+	await ctx.send("Update complete. Restarting, be back soon :)")
 	sys.exit()
 	
 # Shut down the bot, exiting the script that restarts it again for the update command
