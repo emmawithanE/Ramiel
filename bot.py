@@ -13,17 +13,20 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 import var
+import inst_var
 
+# TODO: Investigate if this should just be bot.run(inst_var.token) at the end
+# or if the dotenv intermediate does something useful
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN_RAM')
+TOKEN = os.getenv(inst_var.token_name)
 
 intents = discord.Intents.default()
 intents.members = True
 intents.reactions = True
 
 bot = commands.Bot(
-	command_prefix=("R: ","R:","Ramiel, "),
-	owner_id=268721746708791297,
+	command_prefix=inst_var.prefixes,
+	owner_id=var.usr_owner,
 	intents = intents
 	)
 
@@ -58,65 +61,6 @@ with open("names.txt", "r") as file:
 	for i in file:
 		line = i.split("|")
 		names.append((line[0], int(line[1]), line[2][:-1]))
-
-
-
-# Initialise data structure used for role checking
-
-# reactset is a structure that contains a reference to a message, and a dictionary of reaction : role to give
-# permdict is a dictionary of role : permission role, such that a user cannot get role unless they have permission role
-# TODO: Import contents from an external file
-class reactset:
-	def __init__(self,link,roles,perms=None):
-		linklist = link.split("/")
-		self.svr = int(linklist[0])
-		self.chnl = int(linklist[1])
-		self.msg = int(linklist[2])
-
-		self.reactdict = roles #give as dict
-		self.permdict = perms
-
-messagestocheck = []
-
-# Append new messages to watch for reaction changes
-# Message in test channel on private Discord server
-messagestocheck.append(reactset(
-	link=var.msg_test,
-	roles={
-		"💜": "Heart",
-		"🔑": "PuzzleSolver"} ))
-
-# Actual message in #welcome of the club
-messagestocheck.append(reactset(
-	link=var.msg_welcome,
-	roles={
-		"⭐": "Dog Star",
-		"🍆": "OH&S hazard",
-		"🏖️": "heypeople",
-		"📝": "Master of Games",
-		"📖": "book club"},
-	perms={
-		"Dog Star": "People who definitely exist",
-		"OH&S hazard": "People who definitely exist",
-		"heypeople": "People who definitely exist",
-		"Master of Games": "People who definitely exist",
-		"book club": "People who definitely exist"} ))
-
-# Club #welcome channel LFG message
-messagestocheck.append(reactset(
-	link=var.msg_lfg,
-	roles={
-		"👀": "looking for games"} ))
-
-# April Fools announcement message in club server
-elements = reactset(
-	link=var.msg_elements,
-	roles={
-		"🔥": "Fire",
-		"🌊": "Water",
-		"⛰️": "Earth",
-		"💨": "Air"}
-	)
 
 
 
@@ -168,7 +112,7 @@ async def roleaddremove(reactemoji,user,msg,reactobj,remove=False):
 # For all messages that should be checked, check them (and update roles as needed)
 async def rolecheck():
 
-	for message in messagestocheck:
+	for message in inst_var.messagestocheck:
 
 		print(f"Working message at svr: {message.svr}, chnl: {message.chnl}, msg: {message.msg}\n")
 	
@@ -648,7 +592,7 @@ async def on_message(message):
 # Process a reaction payload to pass relevant data on to other functions
 async def payloadhandle(payload,remove=False):
 	#print(f"Parsing payload-----")
-	for message in [a for a in messagestocheck if a.msg == payload.message_id]:
+	for message in [a for a in inst_var.messagestocheck if a.msg == payload.message_id]:
 		#print("Reaction message ID matches a reactset, passing to roleaddremove\n")
 		target = await bot.fetch_user(payload.user_id)
 		msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
