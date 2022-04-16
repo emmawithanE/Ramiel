@@ -426,6 +426,7 @@ async def list(ctx):
 	message += " - ping: prompt a basic response.\n"
 	message += f" - annoyEmma: sends a message to Emma ({str(Emma)}).\n"
 	message += " - annoyEmmaByUser: sends a different message to Emma, using a different targeting method.\n"
+	message += " - emojiping [emoji]: When used as a reply to another message, pings users who reacted to the original message with [emoji].\n"
 	message += " - repeat: repeats what you say back to you. WARNING: In Progress."
 	message += "```"
 
@@ -562,9 +563,32 @@ async def kill(ctx):
 
 # Ping all users that replied to a given message with a given emoji
 # Experimental
-# TODO: Implement this function
-#@bot.command()
-#async def emojiping(ctx,)
+@bot.command()
+async def emojiping(ctx, msg):
+	ref = ctx.message.reference
+	if not ref:
+		await ctx.send("This command can only be used in a reaction to another message.")
+		return
+
+	origin = await bot.get_guild(ref.guild_id).get_channel(ref.channel_id).fetch_message(ref.message_id)
+	# await ctx.send(f"reacted to: '{origin.content}' with {len(origin.reactions)} unique reactions")
+	for reaction in origin.reactions:
+		if reaction.emoji == msg:
+			print(f"Reaction found: {reaction.count} users")
+			mentionlist = f"Pinging users reacting with {reaction.emoji}: "
+			async for user in reaction.users():
+				if (len(mentionlist) < 1950):
+					# mention can fit in message still
+					mentionlist += user.mention + " "
+				else:
+					# don't risk messages that are too long, send message and start a new one
+					await ctx.send(mentionlist)
+					mentionlist = user.mention + " "
+			
+			await ctx.send(mentionlist)
+			return
+	
+	await ctx.send(f"Did not find {msg} as a reaction to the replied message")
 
 #----------------------------------------------------------------
 
