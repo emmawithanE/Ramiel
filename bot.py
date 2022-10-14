@@ -365,11 +365,18 @@ async def retry(ctx):
 				print(f"Could not find cell containing {recdisc}.\n\n")
 				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
 
+# Rolls num d size and returns the sum
+def rolldice(num, size):
+    total = 0
+    for i in range(0,num):
+        total += random.randint(1,size)
+    return total
+
 # Dice roll: rolls n 6 sided dice and returns the sum of the three highest rolls
 def rollk3(n):
 	rolls = []
 	for i in range(0,n):
-		rolls.append(random.randint(1,6))
+		rolls.append(rolldice(1,6))
 
 	return sum((sorted(rolls,reverse=True))[:3])
 
@@ -392,6 +399,41 @@ async def matrix(ctx,n: int):
 @bot.command()
 async def d10000(ctx):
 	await ctx.send(f"Rolled a d10000: {random.randint(1,10000)}")
+
+# Freight weight category rolling, returns a string of weights, highest to lowest
+def freightweight(category, modifier, multiplier):
+    output = f"**{category}**: "
+
+    # Determine number of freight loads
+    traffic = rolldice(2, 6) + modifier
+    traffic = max(0, min(traffic, 20))
+    num_rolls = rolldice(var.tvl_traffic[traffic], 6)
+    output += f"traffic roll: {traffic}, num_rolls: {num_rolls}, weights: " 
+
+    # Roll num_rolls cargo sizes, each of which is multiplied by multiplier
+    weights = []
+    for i in range(0, num_rolls):
+        weights.append(rolldice(1,6) * multiplier)
+    weights.sort(reverse=True)
+
+    # Generate string
+    for weight in weights:
+        output += str(weight).rjust(3)
+    return output
+
+# Traveller freight generation: see Traveller 2E rule book
+@bot.command()
+async def freight(ctx, bonus: int):
+
+    output = f"Rolling cargo with +{bonus} bonus:\n"
+    output += freightweight("Heavy", bonus-4, 10) + "\n"
+    output += freightweight("Minor", bonus, 5) + "\n"
+    output += freightweight("Incidental", bonus+2, 1)
+
+    ctx.send(output)
+    
+
+
 
 # Basic feedback to check responsiveness
 @bot.command()
