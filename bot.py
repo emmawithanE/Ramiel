@@ -66,7 +66,7 @@ with open("names.txt", "r") as file:
 
 # Either give specified role to specified user, or take it away
 async def changememberrole(role,user,remove=False):
-	if user.id == bot.owner_id:
+	if user.id in [bot.owner_id, var.usr_partner]:
 		return
 
 	if remove:
