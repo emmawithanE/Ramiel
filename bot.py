@@ -133,15 +133,7 @@ async def rolecheck():
 					addrole = addrole & set(permitted)
 
 			for user in addrole:
-				if user.id == bot.owner_id:
-					continue
-
-				try:
-					member = await msg.guild.fetch_member(user.id)
-					await member.add_roles(role)
-					print(f"Added role {str(role)} to {str(user)}")
-				except Exception as e:
-					print(f"Failed to add role {str(role)} to {str(user)} - {e}")
+				changememberrole(user, role)
 
 
 
