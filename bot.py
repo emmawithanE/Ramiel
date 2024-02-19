@@ -123,7 +123,6 @@ async def rolecheck():
 			rolemembers = role.members #List of people who have the associated role
 	
 			addrole = set(reactmembers) - set(rolemembers) #people who reacted but don't have the role, and thus need it
-			remrole = set(rolemembers) - set(reactmembers) #people who have the role but did not react, and thus need it removed
 
 			#Only add role to people who have permission for it
 			if message.permdict != None:
@@ -143,14 +142,6 @@ async def rolecheck():
 					print(f"Added role {str(role)} to {str(user)}")
 				except Exception as e:
 					print(f"Failed to add role {str(role)} to {str(user)} - {e}")
-	
-			for user in remrole:
-				try:
-					member = await msg.guild.fetch_member(user.id)
-					await member.remove_roles(role)
-					print(f"Removed role {str(role)} from {str(user)}")
-				except Exception as e:
-					print(f"Failed to remove role {str(role)} from {str(user)} - {e}")
 
 
 
