@@ -635,9 +635,6 @@ async def on_message(message):
 		if message.guild.id == var.svr_ignore:
 			return
 
-	if message.content.lower().startswith(('owo','uwu','hewwo')) and message.guild.id == var.svr_club:
-		await message.channel.send('Ew, furry')
-
 	await bot.process_commands(message)
 
 # Process a reaction payload to pass relevant data on to other functions
