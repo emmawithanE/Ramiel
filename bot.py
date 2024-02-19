@@ -5,7 +5,6 @@ import asyncio
 
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 from pydrive.drive import GoogleDrive 
 from pydrive.auth import GoogleAuth 
@@ -14,11 +13,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 import var
 import inst_var
-
-# TODO: Investigate if this should just be bot.run(inst_var.token) at the end
-# or if the dotenv intermediate does something useful
-load_dotenv()
-TOKEN = os.getenv(inst_var.token_name)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -430,7 +424,7 @@ async def freight(ctx, bonus: int):
     output += freightweight("Minor", bonus, 5) + "\n"
     output += freightweight("Incidental", bonus+2, 1)
 
-    ctx.send(output)
+    await ctx.send(output)
     
 
 
@@ -685,4 +679,4 @@ async def on_message_delete(message):
 		msg += "\n```"
 		await message.channel.send(msg)
 
-bot.run(TOKEN)
+bot.run(inst_var.token)
