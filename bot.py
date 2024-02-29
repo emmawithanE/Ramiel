@@ -6,10 +6,10 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from pydrive.drive import GoogleDrive 
-from pydrive.auth import GoogleAuth 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+# from pydrive.drive import GoogleDrive 
+# from pydrive.auth import GoogleAuth 
+# import gspread
+# from oauth2client.service_account import ServiceAccountCredentials
 
 import var
 import inst_var
@@ -28,15 +28,15 @@ bot = commands.Bot(
 # TODO: Limit these commands more directly, as needed
 bot.remove_command('help')
 
-# Get the Google Sheet used for tracking things people like
-# Use creds to create a client to interact with the Google Drive API
-scope = ['https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-client = gspread.authorize(creds)
+# # Get the Google Sheet used for tracking things people like
+# # Use creds to create a client to interact with the Google Drive API
+# scope = ['https://www.googleapis.com/auth/drive']
+# creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+# client = gspread.authorize(creds)
 
-# Find a workbook by name and open the first sheet
-sheet = client.open("Secret Santa Responses")
-page = sheet.get_worksheet(0)
+# # Find a workbook by name and open the first sheet
+# sheet = client.open("Secret Santa Responses")
+# page = sheet.get_worksheet(0)
 
 
 
@@ -179,168 +179,168 @@ async def save(ctx):
 	namefile.close()
 	await ctx.send("Saved!")
 
-# Show the Google Sheet responses for a named user (technically any string that can be found in the Sheet)
-# TODO: Limit search range to the relevant column of the Google Sheet?
-@bot.command()
-async def showlikes(ctx, arg):
-	try:
-		row = page.find(arg).row
-	except:
-		print(f"Could not find cell containing {arg}.\n\n")
-		return
-	likes = page.row_values(row)
-	labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+# # Show the Google Sheet responses for a named user (technically any string that can be found in the Sheet)
+# # TODO: Limit search range to the relevant column of the Google Sheet?
+# @bot.command()
+# async def showlikes(ctx, arg):
+# 	try:
+# 		row = page.find(arg).row
+# 	except:
+# 		print(f"Could not find cell containing {arg}.\n\n")
+# 		return
+# 	likes = page.row_values(row)
+# 	labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
 
-	msg = ''
-	paragraph = ''
+# 	msg = ''
+# 	paragraph = ''
 
-	for i in range(1,11):
-		paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
-		if (len(msg) + len(paragraph) < 1990):
-			# paragraph can fit in message still
-			msg += paragraph
-			print(f"Combining line {i} into msg")
-		else:
-			#paragraph is too large to add, send message and start a new one
-			await ctx.send(msg)
-			msg = paragraph
-			print(f"Printing message at line {i-1}")
+# 	for i in range(1,11):
+# 		paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+# 		if (len(msg) + len(paragraph) < 1990):
+# 			# paragraph can fit in message still
+# 			msg += paragraph
+# 			print(f"Combining line {i} into msg")
+# 		else:
+# 			#paragraph is too large to add, send message and start a new one
+# 			await ctx.send(msg)
+# 			msg = paragraph
+# 			print(f"Printing message at line {i-1}")
 
-	await ctx.send(msg)
+# 	await ctx.send(msg)
 
-# Randomly assign each person in the Secret Santa list a giftee, then send allocation information in DMs
-# Logs the list of assignments in DO_NOT_OPEN.txt, for reference if needed
-@bot.command()
-async def fire(ctx):
-	if ctx.author.id != bot.owner_id and ctx.author.id != var.usr_partner:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or her partner).")
-		return
-	else:
-		recipients = names.copy()
+# # Randomly assign each person in the Secret Santa list a giftee, then send allocation information in DMs
+# # Logs the list of assignments in DO_NOT_OPEN.txt, for reference if needed
+# @bot.command()
+# async def fire(ctx):
+# 	if ctx.author.id != bot.owner_id and ctx.author.id != var.usr_partner:
+# 		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or her partner).")
+# 		return
+# 	else:
+# 		recipients = names.copy()
 
-		# randomly shuffle recipients list
-		random.shuffle(recipients)
-		print("Shuffling first time!")
+# 		# randomly shuffle recipients list
+# 		random.shuffle(recipients)
+# 		print("Shuffling first time!")
 
-		matched = True
+# 		matched = True
 
-		# shuffle again as long as any names are in the same place between the two
-		while matched == True:
-			matched = False
-			for a, b in zip(names,recipients):
-				# compare user IDs as they are most guaranteed separate and unchanging
-				if a[1] == b[1]:
-					#need to reshuffle and try again
-					random.shuffle(recipients)
-					print("Match! Shuffled again.")
-					matched = True
-					break
+# 		# shuffle again as long as any names are in the same place between the two
+# 		while matched == True:
+# 			matched = False
+# 			for a, b in zip(names,recipients):
+# 				# compare user IDs as they are most guaranteed separate and unchanging
+# 				if a[1] == b[1]:
+# 					#need to reshuffle and try again
+# 					random.shuffle(recipients)
+# 					print("Match! Shuffled again.")
+# 					matched = True
+# 					break
 
-		print("Shuffle complete, hopefully! Sending names...")
+# 		print("Shuffle complete, hopefully! Sending names...")
 
-		for a, b in zip(names,recipients):
-			recname = b[0]
-			recdisc = b[2]
+# 		for a, b in zip(names,recipients):
+# 			recname = b[0]
+# 			recdisc = b[2]
 
-			givname = a[0]
-			givID = a[1]
+# 			givname = a[0]
+# 			givID = a[1]
 
-			# send a message through givID to givname, naming recname and recdisc
-			giver = await bot.fetch_user(givID)
-			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
+# 			# send a message through givID to givname, naming recname and recdisc
+# 			giver = await bot.fetch_user(givID)
+# 			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
 
-			try:
-				row = page.find(recdisc).row
+# 			try:
+# 				row = page.find(recdisc).row
 
-				likes = page.row_values(row)
-				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+# 				likes = page.row_values(row)
+# 				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
 
-				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
-				msg = ''
-				paragraph = ''
+# 				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
+# 				msg = ''
+# 				paragraph = ''
 
-				for i in range(1,11):
-					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
-					if (len(msg) + len(paragraph) < 1990):
-						# paragraph can fit in message still
-						msg += paragraph
-						print(f"Combining line {i} into msg")
-					else:
-						#paragraph is too large to add, send message and start a new one
-						await giver.send(msg)
-						msg = paragraph
-						print(f"Printing message at line {i-1}")
+# 				for i in range(1,11):
+# 					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+# 					if (len(msg) + len(paragraph) < 1990):
+# 						# paragraph can fit in message still
+# 						msg += paragraph
+# 						print(f"Combining line {i} into msg")
+# 					else:
+# 						#paragraph is too large to add, send message and start a new one
+# 						await giver.send(msg)
+# 						msg = paragraph
+# 						print(f"Printing message at line {i-1}")
 
-				await giver.send(msg)
+# 				await giver.send(msg)
 
-			except:
-				print(f"Could not find cell containing {recdisc}.\n\n")
-				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
+# 			except:
+# 				print(f"Could not find cell containing {recdisc}.\n\n")
+# 				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
 
-		try:
-			open("DO_NOT_OPEN.txt", "x")
-			print('Created DO_NOT_OPEN.txt')
-		except:
-			pass
+# 		try:
+# 			open("DO_NOT_OPEN.txt", "x")
+# 			print('Created DO_NOT_OPEN.txt')
+# 		except:
+# 			pass
 
-		DONT = open("DO_NOT_OPEN.txt","w+")
-		DONT.write("Recipients, in order of names.txt:\n\n")
-		for name, ID, username in recipients:
-			DONT.write(name + "|" + str(ID) + "|" + username + "\n")
-		DONT.close()
-		await ctx.send("Created DO_NOT_OPEN.txt!")
+# 		DONT = open("DO_NOT_OPEN.txt","w+")
+# 		DONT.write("Recipients, in order of names.txt:\n\n")
+# 		for name, ID, username in recipients:
+# 			DONT.write(name + "|" + str(ID) + "|" + username + "\n")
+# 		DONT.close()
+# 		await ctx.send("Created DO_NOT_OPEN.txt!")
 
-# Attempt to send allocations again, without reshuffling
-# TODO: Function is untested and possibly broken, test before potential use
-@bot.command()
-async def retry(ctx):
-	if ctx.author.id != bot.owner_id and ctx.author.id != var.usr_partner:
-		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or, temporarily, her partner).")
-		return
-	recipients = []
-	with open("DO_NOT_OPEN.txt", "r") as recip:
-		for i in recip:
-			line = i.split("|")
-			recipients.append((line[0], int(line[1]), line[2][:-1]))
+# # Attempt to send allocations again, without reshuffling
+# # TODO: Function is untested and possibly broken, test before potential use
+# @bot.command()
+# async def retry(ctx):
+# 	if ctx.author.id != bot.owner_id and ctx.author.id != var.usr_partner:
+# 		await ctx.send(f"Sorry, this command can only be used by {bot.fetch_user(bot.owner_id).name} (or, temporarily, her partner).")
+# 		return
+# 	recipients = []
+# 	with open("DO_NOT_OPEN.txt", "r") as recip:
+# 		for i in recip:
+# 			line = i.split("|")
+# 			recipients.append((line[0], int(line[1]), line[2][:-1]))
 
-	for a, b in zip(names,recipients):
-			recname = b[0]
-			recdisc = b[2]
+# 	for a, b in zip(names,recipients):
+# 			recname = b[0]
+# 			recdisc = b[2]
 
-			givname = a[0]
-			givID = a[1]
+# 			givname = a[0]
+# 			givID = a[1]
 
-			# send a message through givID to givname, naming recname and recdisc
-			giver = await bot.fetch_user(givID)
-			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
+# 			# send a message through givID to givname, naming recname and recdisc
+# 			giver = await bot.fetch_user(givID)
+# 			await giver.send(f"Hi {givname}! I have randomly allocated Secret Santa names, and you got: {recname} ({recdisc} on Discord). If this is you, please yell at Emma!")
 
-			try:
-				row = page.find(recdisc).row
+# 			try:
+# 				row = page.find(recdisc).row
 
-				likes = page.row_values(row)
-				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
+# 				likes = page.row_values(row)
+# 				labels = ["Timestamp","IRL Name","Discord Name","Hobbies or fandoms","Colours/aesthetics","Foods","Sounds/music","Smells","Texture","Don't want or have","Someone you could ask for ideas"]
 
-				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
-				msg = ''
-				paragraph = ''
+# 				await giver.send("Here are the things that person wrote on their Google Form:\n\n")
+# 				msg = ''
+# 				paragraph = ''
 
-				for i in range(1,11):
-					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
-					if (len(msg) + len(paragraph) < 1990):
-						# paragraph can fit in message still
-						msg += paragraph
-						print(f"Combining line {i} into msg")
-					else:
-						#paragraph is too large to add, send message and start a new one
-						await giver.send(msg)
-						msg = paragraph
-						print(f"Printing message at line {i-1}")
+# 				for i in range(1,11):
+# 					paragraph = f"**{labels[i]}:** {likes[i]}\n\n"
+# 					if (len(msg) + len(paragraph) < 1990):
+# 						# paragraph can fit in message still
+# 						msg += paragraph
+# 						print(f"Combining line {i} into msg")
+# 					else:
+# 						#paragraph is too large to add, send message and start a new one
+# 						await giver.send(msg)
+# 						msg = paragraph
+# 						print(f"Printing message at line {i-1}")
 
-				await giver.send(msg)
+# 				await giver.send(msg)
 
-			except:
-				print(f"Could not find cell containing {recdisc}.\n\n")
-				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
+# 			except:
+# 				print(f"Could not find cell containing {recdisc}.\n\n")
+# 				await giver.send("I failed to find a Google Sheet row for that person! Definitely yell at Emma!")
 
 # Rolls num d size and returns the sum
 def rolldice(num, size):
