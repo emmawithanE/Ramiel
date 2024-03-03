@@ -133,7 +133,7 @@ async def rolecheck():
 					addrole = addrole & set(permitted)
 
 			for user in addrole:
-				changememberrole(user, role)
+				await changememberrole(user, role)
 
 
 
